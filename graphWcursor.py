@@ -1,7 +1,7 @@
 from pylab import *
-import pandas, cv
+import pandas, cv, os
 
-logFilePath="/scratch/copterlogs/logs/2012-07-09 10-02 6.log"
+logFilePath="/home/aaron/Mission Planner 1.1.96/logs/2012-07-09 10-02 6.log"
 startTime=datetime.datetime(2012,07,9)
 def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime):
     logData={'timestamp':[],'motors_out':np.empty(dtype='int32', shape=(0,4))}
@@ -18,7 +18,23 @@ def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime):
                     logData['motors_out']=vstack((logData['motors_out'],logLine.split(',')[1:]))
                     #Throw away data until we get another timestamp
                     timestampIsCurrent=False
-    logData=pandas.DataFrame(logData['motors_out'],index=logData['timestamp'])
+    logData=pandas.DataFrame(logData['motors_out'],index=logData['timestamp'],dtype='int32')
     return(logData)
 
-loadDataFromLog()
+def plotWithTimeBar(logData, timeBarLoc, outputDir='frame'):
+    if not os.path.exists(outputDir):
+        os.mkdir(outputDir)
+    hold(True)
+    figure(1,figsize=(800,200),dpi=100,bbox_inches=0)
+    logData.plot(subplots=False)
+    axvline(timeBarLoc)
+    savefig(outputDir+'/'+str(timeBarLoc)+'.png',transparent=True)
+    hold(False)
+
+def plotAllFrames(logData):
+    for timeStamp in logData.index:
+        plotWithTimeBar(logData, timeStamp)
+
+def basicStats(logFilePath=logFilePath):
+    pass
+    
