@@ -1,7 +1,7 @@
 from pylab import *
 import pandas, cv, os
 
-logFilePath="/home/aaron/Mission Planner 1.1.96/logs/2012-07-09 10-02 6.log"
+logFilePath="/home/aaron/arducopter/logs/2012-07-09 10-02 6.log"
 startTime=datetime.datetime(2012,07,9)
 def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime):
     logData={'timestamp':[],'motors_out':np.empty(dtype='int32', shape=(0,4))}
@@ -21,22 +21,25 @@ def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime):
     logData=pandas.DataFrame(logData['motors_out'],index=logData['timestamp'],dtype='int32')
     return(logData)
 
-def plotWithTimeBar(logData, filenumber, timeBarLoc, outputDir='frame'):
+def plotWithTimeBar(logData, filenumber, timeBarLoc, outputDir='frames'):
     if not os.path.exists(outputDir):
         os.mkdir(outputDir)
     hold(True)
     figure(1)
     logData.plot(subplots=False,figsize=(8,2),legend=False)
-    axvline(timeBarLoc)
-    savefig(outputDir+'/'+'%04d'%filenumber+str(timeBarLoc)+'.png',transparent=True)
+    axvline(timeBarLoc, linewidth=5)
+    savefig(outputDir+'/'+'%04d'%filenumber+str(timeBarLoc).replace(' ','_')+'.png',transparent=True)
+    close('all')
     hold(False)
 
 def plotAllFrames(logData):
     filenumber=0
     for timeStamp in logData.index:
-        plotWithTimeBar(logData, filenumber, timeStamp)
-        filenumber++
+        plotWithTimeBar(logData, filenumber, timeBarLoc=timeStamp)
+        filenumber += 1
 
 def basicStats(logFilePath=logFilePath):
     pass
 
+def loadVideo(videoFilePath, videoType, syncinfo):
+    pass
