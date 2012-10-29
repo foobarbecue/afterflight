@@ -2,7 +2,7 @@
 Reads a .tlog using pymavlink into the afterflight database
 todo: get_or_creates should be checking MAV id
 '''
-import sys
+import sys, os
 from datetime import datetime
 from django.conf import settings
 # allow import from where mavlink.py is
@@ -31,8 +31,16 @@ def readInLog(filepath):
             for key, item in m.items():
                 if key!='mavpackettype':
                     newDatum=MavDatum(msgField=key,value=item,message=newMessage)
-                    newDatum.save()
+                    newDatum.save()                        
         except AttributeError:
             newFlight.save()
             continue
+
     return newFlight
+
+def readInDirectory(log_dir_path):
+    log_filenames=os.listdir(log_dir_path)
+    for log_filename in log_filenames:
+        if '.tlog' in log_filename:
+            print 'reading %s' % log_filename
+            readInLog(os.path.join(log_dir_path, log_filename))
