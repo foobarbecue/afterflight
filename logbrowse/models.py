@@ -616,15 +616,24 @@ MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
 ##('mavpackettype','mavpackettype'))
 
 class Flight(models.Model):
-    pilot=models.ForeignKey(User, blank=True, null=True)
-    logfile=models.FileField(blank=True, upload_to='logs')
-    start=models.DateTimeField(blank=True, null=True)
-    comments=models.TextField(blank=True, null=True)
-    video=models.URLField(blank=True, null=True)
+    pilot=models.ForeignKey(User)
+    logfile=models.FileField(blank=False, upload_to='logs')
+    start=models.DateTimeField(blank=False)
+    comments=models.TextField(blank=False)
+    video=models.URLField(blank=False, verify_exists=True)
+
+    def battVlts(self):
+        pass
+        #return (timestamps, voltages)
+
+    def throttle(self):
+        pass
+        #return (timestamps, voltages)
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
     timestamp=models.DateTimeField()
+    flight=models.ForeignKey('Flight')
     
 class MavDatum(models.Model):
     message=models.ForeignKey('MavMessage')

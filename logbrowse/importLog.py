@@ -23,7 +23,7 @@ def readInLog(filepath):
             if 'PARAM' in m._type:
                 continue
             timestamp=datetime.fromtimestamp(m._timestamp)
-            newMessage=MavMessage(msgType=m._type, timestamp=timestamp)
+            newMessage=MavMessage(msgType=m._type, timestamp=timestamp, flight=newFlight)
             newMessage.save()
             m=m.to_dict()
             for key, item in m.items():
