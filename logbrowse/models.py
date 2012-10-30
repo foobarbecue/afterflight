@@ -616,17 +616,20 @@ MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
 ##('mavpackettype','mavpackettype'))
 
 class Flight(models.Model):
-    pilot=models.ForeignKey(User)
-    logfile=models.FileField(blank=False, upload_to='logs')
-    start=models.DateTimeField(blank=False)
-    comments=models.TextField(blank=False)
-    video=models.URLField(blank=False, verify_exists=True)
-
-    def battVlts(self):
-        pass
-        #return (timestamps, voltages)
-
-    def throttle(self):
+    pilot=models.ForeignKey(User,blank=True, null=True)
+    logfile=models.FileField(blank=True, null=True, upload_to='logs')
+    start=models.DateTimeField(blank=True, null=True)
+    comments=models.TextField(blank=True, null=True)
+    video=models.URLField(blank=True, null=True)
+    battery=models.ForeignKey('Battery',blank=True, null=True, )
+    airframe=models.ForeignKey('Airframe', blank=True, null=True)
+    slug=models.SlugField()
+    def battVltsData(self):
+        vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='voltage_battery')
+        vltVals=vltDataQ.values_list('message__timestamp','value')
+        return vltVals
+    
+    def throttleData(self):
         pass
         #return (timestamps, voltages)
 
@@ -639,4 +642,16 @@ class MavDatum(models.Model):
     message=models.ForeignKey('MavMessage')
     msgField=models.CharField(max_length=40)
     value=models.FloatField()
-    
+
+class Battery(models.Model):
+    cells=models.IntegerField(blank=True, null=True)
+    capacity=models.IntegerField(blank=True, null=True)
+    currentRating=models.IntegerField(blank=True, null=True)
+    mfgSerNum=models.CharField(blank=True, null=True,max_length=40)
+    persSerNum=models.CharField(max_length=40, primary_key=True)
+
+class Airframe(models.Model):
+    mfg=models.CharField(blank=True, null=True, max_length=40)
+    partModel=models.CharField(blank=True, null=True, max_length=40)
+    mfgSerNum=models.CharField(blank=True, null=True,max_length=40)
+    persSerNum=models.CharField(max_length=40)
