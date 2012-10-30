@@ -10,11 +10,12 @@ sys.path.append(settings.PYMAVLINK_PATH)
 import mavutil
 from logbrowse.models import Flight, MavMessage, MavDatum
 from django.contrib.auth.models import User
+from django.db import transaction
 
 def readInLog(filepath):
     mlog = mavutil.mavlink_connection(filepath)
     newFlight, created=Flight.objects.get_or_create(logfile=filepath)
-    while True:
+    while created:
         try:
             m=mlog.recv_msg()
             #Importing flight parameters into the database is not implemented yet,
@@ -22,21 +23,21 @@ def readInLog(filepath):
             if 'PARAM' in m._type:
                 continue
             timestamp=datetime.fromtimestamp(m._timestamp)
-            newMessage, created=MavMessage.objects.get_or_create(msgType=m._type, timestamp=timestamp)
-            #If this message is already in the database
-            if not created:
-                continue
+            newMessage=MavMessage(msgType=m._type, timestamp=timestamp)
             newMessage.save()
             m=m.to_dict()
             for key, item in m.items():
                 if key!='mavpackettype':
-                    newDatum=MavDatum(msgField=key,value=item,message=newMessage)
-                    newDatum.save()                        
+                    try:
+                        value=float(item)
+                    except ValueError:
+                        print "non-number value in %s" % m
+                        continue
+                    newDatum=MavDatum(msgField=key,value=value,message=newMessage)
+                    newDatum.save()
         except AttributeError:
             newFlight.save()
-            continue
-
-    return newFlight
+            return newFlight
 
 def readInDirectory(log_dir_path):
     log_filenames=os.listdir(log_dir_path)
