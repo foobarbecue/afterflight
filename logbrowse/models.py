@@ -56,6 +56,15 @@ class Flight(models.Model):
     def latLonsJSON(self):
         return scipy.array([self.lons(), self.lats()]).transpose().tolist()
     
+    @property
+    def gpsTimestamps(self):
+        times=MavMessage.objects.filter(flight=self,msgType='GPS_RAW_INT').values_list('timestamp',flat=True)
+        return [time.mktime(timestamp.timetuple())*1000 for timestamp in times]
+        
+    @property
+    def messageTypesRecorded(self):
+        return MavDatum.objects.filter(message__flight=self).values('message__msgType').distinct()
+
     def throttleData(self):
         pass
         #return (timestamps, voltages)
