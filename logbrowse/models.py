@@ -33,6 +33,7 @@ class Flight(models.Model):
     battery=models.ForeignKey('Battery',blank=True, null=True, )
     airframe=models.ForeignKey('Airframe', blank=True, null=True)
     slug=models.SlugField()
+    
     def battVltsData(self):
         vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='voltage_battery')
         vltVals=vltDataQ.values_list('message__timestamp','value')
@@ -55,7 +56,7 @@ class Flight(models.Model):
     @property
     def latLonsJSON(self):
         return scipy.array([self.lons(), self.lats()]).transpose().tolist()
-    
+        
     @property
     def gpsTimestamps(self):
         times=MavMessage.objects.filter(flight=self,msgType='GPS_RAW_INT').values_list('timestamp',flat=True)
@@ -63,14 +64,34 @@ class Flight(models.Model):
         
     @property
     def messageTypesRecorded(self):
-        return MavDatum.objects.filter(message__flight=self).values('message__msgType').distinct()
-
+        return MavDatum.objects.filter(message__flight=self).values_list('message__msgType',flat=True).distinct()
+    
+    @property
+    def messageFieldsRecorded(self):
+        return MavDatum.objects.filter(message__flight=self, message__msgType=msgType).values('msgField').distinct()
+    
+    @property
+    def length(self):
+        return self.mavmessage_set.order_by('-timestamp')[0].timestamp-self.mavmessage_set.order_by('timestamp')[0].timestamp
+    
+    def countMessagesByType(self):
+        msgTypeCounts=[None]*len(self.messageTypesRecorded)
+        x=0
+        for msgType in self.messageTypesRecorded:
+            msgTypeCounts[x]=self.mavmessage_set.filter(msgType=msgType).count()
+            x+=1
+        return zip(self.messageTypesRecorded, msgTypeCounts)
+    
     def throttleData(self):
         pass
         #return (timestamps, voltages)
 
     def __unicode__(self):
         return self.slug
+
+    #for msgField in messageFieldsRecorded:
+        #self.__dict__['%sJSON' % msgField]=lambda: MavDatum.objects.filter(message__flight=self, msgField=msgField).values_list('message__timestamp','value')
+
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)

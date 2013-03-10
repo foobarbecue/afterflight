@@ -10,11 +10,11 @@
 <script src="{{ STATIC_URL }}js/jqplot/jquery.jqplot.min.js"></script>
 <script src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.dateAxisRenderer.js"></script>
 <script src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.cursor.min.js"></script>
-<script src="http://openlayers.org/dev/OpenLayers.js"></script>
+<script src="{{ STATIC_URL }}js/OpenLayers.js"></script>
 <script src="http://dev.openlayers.org/addins/scalebar/trunk/lib/OpenLayers/Control/ScaleBar.js"></script>
 <script>
-var flightMap, layer, vector_layer, battVltsData,battThrData, hoveredItem, features, flightPathFeatures, limitedLayer, limitedFlightPathDecimal, gpsTimestamps;
-
+var flightMap, layer, vector_layer, battVltsData,battThrData, hoveredItem, features, flightPathFeatures, limitedLayer, limitedFlightPathDecimal, gpsTimestamps, ytplayer;
+ytplayer=5;
 $(document).ready(function(){
 
 gpsTimestamps={{object.gpsTimestamps}}
@@ -45,11 +45,23 @@ $("#battVltsData").bind("jqplotDataMouseOver", function(event, srsInd, ptInd, da
         hoveredItem=data
         decPos=(hoveredItem[0]-min)/(max-min)
         limitedFlightPathDecimal(decPos-0.05,decPos+0.05)
+        seekEverythingTo(20)
     }
 });
 
 var latLonsJSON={{object.latLonsJSON}}
 
+{%if object.video %}
+var params = { allowScriptAccess: "always" };
+var atts = { id: "myytplayer" };
+swfobject.embedSWF("http://www.youtube.com/v/tA1cMbcm6bc?enablejsapi=1&playerapiid=ytplayer&version=3",
+                    "ytapiplayer", "425", "356", "8", null, null, params, atts);
+{% endif %}
+
+function seekEverythingTo(seekSecs) {
+    ytplayer = document.getElementById("myytplayer");
+    ytplayer.seekTo(seekSecs);
+}
 
 function initMap() {
     // Bing's Road imagerySet
@@ -88,27 +100,6 @@ function initMap() {
     });
 
 
-    var gsat = new OpenLayers.Layer.Google(
-        "Google Satellite",
-        {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 20}
-        // used to be {type: G_SATELLITE_MAP, numZoomLevels: 22}
-    );
-    var gphy = new OpenLayers.Layer.Google(
-        "Google Physical",
-        {type: google.maps.MapTypeId.TERRAIN}
-        // used to be {type: G_PHYSICAL_MAP}
-    );
-    var gmap = new OpenLayers.Layer.Google(
-        "Google Streets", // the default
-        {numZoomLevels: 20}
-        // default type, no change needed here
-    );
-    var ghyb = new OpenLayers.Layer.Google(
-        "Google Hybrid",
-        {type: google.maps.MapTypeId.HYBRID, numZoomLevels: 20}
-        // used to be {type: G_HYBRID_MAP, numZoomLevels: 20}
-    );
-
     flightMap = new OpenLayers.Map('map',{projection: new OpenLayers.Projection("EPSG:900913"),fractionalZoom: true});
     flightMap.addControl(new OpenLayers.Control.LayerSwitcher());
     flightMap.addControl(new OpenLayers.Control.ScaleLine());
@@ -134,7 +125,7 @@ function initMap() {
     
     flightPathFeatures=geojson_format.read(flightPathFeaturesJSON);
     vector_layer.addFeatures(flightPathFeatures);
-    flightMap.addLayers([baerial, broad, bhybrid, vector_layer,limitedLayer]);
+    flightMap.addLayers([bhybrid, baerial, broad, vector_layer,limitedLayer]);
     
     flightMap.zoomToExtent(vector_layer.getDataExtent());
     };
@@ -160,14 +151,29 @@ findBetween=function(startSecs,endSecs,timeList){
 
 initMap();
 
+
 });
 </script>
+
 </head>
 <body>
+
+{% if object.video %}
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>    
+
+{% endif %}
+
 {{object}}
-Number of mavlink messages: {{object.mavmessage_set.count}}
+Mavlink messages by type
+<ul>
+{% for messageType in object.countMessagesByType %}
+<li>{{messageType.0}}: {{messageType.1}}</li>
+{% endfor %}
+</ul>
+Total mavlink messages: {{object.mavmessage_set.count}}
+
 <div id="battVltsData" style="width:600px;height:300px"></div>
 <div id="map" style="width:600px;height:300px"></div>
-
+<div id="ytapiplayer"></div>
 </body>
 </html>

@@ -1,6 +1,7 @@
 <html>
 <body>
-{{object}}
-
+{% for flight in object_list %}
+<a href={{flight}}>{{flight}}</a>
+{% endfor %}
 </body>
 </html>
