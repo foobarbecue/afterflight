@@ -24,8 +24,9 @@ battVltsData = $.jqplot('battVltsData',  battThrData,
     {
     title:'{{object}}',
     axes:{xaxis:{renderer:$.jqplot.DateAxisRenderer,tickInterval:60000},
-         yaxis:{label:'Battery voltage, mV'}},
-    series:[{showMarker:false}],
+          yaxis:{label:'Battery voltage, mV'},
+          y2axis:{label:'Throttle PWM value'}},
+    series:[{showMarker:false},{showMarker:false,yaxis:'y2axis'}],
     zoom: true,
     cursor: {
         show: true,

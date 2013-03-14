@@ -1,7 +1,19 @@
 <html>
 <body>
+<table>
+<tr>
+<th>Logfile</th>
+<th>Length</th>
+<th>Comments</th>
+</tr>
 {% for flight in object_list %}
-<a href={{flight}}>{{flight}}</a>
+<tr>
+<td><a href={{flight}}>{{flight}}</a></td>
+<td>{% if flight.length %}{{flight.length}}{% endif %}</td>
+<td>{{flight.comments}}</td>
+<td>{{flight.gpsTimes.0}}</td>
+</tr>
 {% endfor %}
+</table>
 </body>
 </html>

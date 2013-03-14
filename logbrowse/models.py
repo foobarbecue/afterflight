@@ -24,6 +24,8 @@ MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
 ('STATUSTEXT','STATUSTEXT'),
 ('GPS_STATUS','GPS_STATUS'))
 
+
+
 class Flight(models.Model):
     pilot=models.ForeignKey(User,blank=True, null=True)
     logfile=models.FileField(blank=True, null=True, upload_to='logs')
@@ -33,7 +35,17 @@ class Flight(models.Model):
     battery=models.ForeignKey('Battery',blank=True, null=True, )
     airframe=models.ForeignKey('Airframe', blank=True, null=True)
     slug=models.SlugField()
-    
+
+    def thrData(self):
+        vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='throttle')
+        vltVals=vltDataQ.values_list('message__timestamp','value')
+        return vltVals
+
+    def thrDataFlot(self):
+        vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='throttle')
+        vltVals=vltDataQ.values_list('message__timestamp','value')
+        return ','.join([r'[%.1f,%.1f]' % (time.mktime(timestamp.timetuple())*1000,value) for timestamp, value in self.thrData()])
+        
     def battVltsData(self):
         vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='voltage_battery')
         vltVals=vltDataQ.values_list('message__timestamp','value')
@@ -56,11 +68,14 @@ class Flight(models.Model):
     @property
     def latLonsJSON(self):
         return scipy.array([self.lons(), self.lats()]).transpose().tolist()
+    
+    @property
+    def gpsTimes(self):
+        return MavMessage.objects.filter(flight=self,msgType='GPS_RAW_INT').values_list('timestamp',flat=True)
         
     @property
     def gpsTimestamps(self):
-        times=MavMessage.objects.filter(flight=self,msgType='GPS_RAW_INT').values_list('timestamp',flat=True)
-        return [time.mktime(timestamp.timetuple())*1000 for timestamp in times]
+        return [time.mktime(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
         
     @property
     def messageTypesRecorded(self):
@@ -68,11 +83,14 @@ class Flight(models.Model):
     
     @property
     def messageFieldsRecorded(self):
-        return MavDatum.objects.filter(message__flight=self, message__msgType=msgType).values('msgField').distinct()
+        return MavDatum.objects.filter(message__flight=self).values('msgField').distinct()
     
     @property
     def length(self):
-        return self.mavmessage_set.order_by('-timestamp')[0].timestamp-self.mavmessage_set.order_by('timestamp')[0].timestamp
+        if self.mavmessage_set.exists():
+            return self.mavmessage_set.order_by('-timestamp')[0].timestamp-self.mavmessage_set.order_by('timestamp')[0].timestamp
+        else:
+            return 0
     
     def countMessagesByType(self):
         msgTypeCounts=[None]*len(self.messageTypesRecorded)
@@ -91,7 +109,16 @@ class Flight(models.Model):
 
     #for msgField in messageFieldsRecorded:
         #self.__dict__['%sJSON' % msgField]=lambda: MavDatum.objects.filter(message__flight=self, msgField=msgField).values_list('message__timestamp','value')
+        
+    class Meta:
+        ordering = ['slug']
 
+class FlightVideo(models.Model):
+    flight=models.ForeignKey('Flight')
+    startTimestamp=models.DateTimeField(blank=True, null=True)
+    onboard=models.BooleanField(blank=True, default=True)
+    url=models.URLField(blank=True, null=True)
+    file=models.FileField(blank=True, null=True, upload_to='video')
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
