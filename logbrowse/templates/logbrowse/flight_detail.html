@@ -59,9 +59,20 @@ swfobject.embedSWF("http://www.youtube.com/v/tA1cMbcm6bc?enablejsapi=1&playerapi
                     "ytapiplayer", "425", "356", "8", null, null, params, atts);
 {% endif %}
 
+{%if object.flightvideo_set %}
+//  This is the new way to deal with video, allowing multiple videos
+    {% for video in flightvideo_set %}
+    <video>
+        <source src="/video/HHD00006.MOV">
+    </video>
+    {% endfor %}
+{% endif %}
+
 function seekEverythingTo(seekSecs) {
+    {%if object.video %}
     ytplayer = document.getElementById("myytplayer");
     ytplayer.seekTo(seekSecs);
+    {% endif %}
 }
 
 function initMap() {
@@ -176,5 +187,8 @@ Total mavlink messages: {{object.mavmessage_set.count}}
 <div id="battVltsData" style="width:600px;height:300px"></div>
 <div id="map" style="width:600px;height:300px"></div>
 <div id="ytapiplayer"></div>
+<EMBED SRC="/media/video/HHD00006.MOV"></embed>
+
+
 </body>
 </html>

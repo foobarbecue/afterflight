@@ -115,10 +115,10 @@ class Flight(models.Model):
 
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
-    startTimestamp=models.DateTimeField(blank=True, null=True)
+    delayVsLogstart=models.DateTimeField(blank=True, null=True)
     onboard=models.BooleanField(blank=True, default=True)
     url=models.URLField(blank=True, null=True)
-    file=models.FileField(blank=True, null=True, upload_to='video')
+    videoFile=models.FileField(blank=True, null=True, upload_to='video')
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
