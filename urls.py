@@ -2,6 +2,7 @@ from django.conf.urls import patterns, include, url
 from django.views.generic.list_detail import *
 from django.contrib import admin
 from logbrowse.models import Flight
+from logbrowse.views import *
 import settings
 admin.autodiscover()
 
@@ -15,6 +16,7 @@ urlpatterns = patterns('',
 
     url(r'^flight/(?P<slug>.+)/$',object_detail,{'queryset':Flight.objects.all()}, name='flights'),
     url(r'^flight/$',object_list,{'queryset':Flight.objects.all()}, name='flight_list'),
+    url(r'^timeline/$',timegliderFormatFlights, name='timeline'),
     url(r'^admin/', include(admin.site.urls)),
 )
 

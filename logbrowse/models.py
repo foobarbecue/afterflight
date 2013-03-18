@@ -72,7 +72,17 @@ class Flight(models.Model):
     @property
     def gpsTimes(self):
         return MavMessage.objects.filter(flight=self,msgType='GPS_RAW_INT').values_list('timestamp',flat=True)
-        
+    
+    @property
+    def startTime(self):
+        if self.mavmessage_set.exists():
+            return self.mavmessage_set.order_by('timestamp')[0].timestamp
+    
+    @property
+    def endTime(self):
+        if self.mavmessage_set.exists():
+            return self.mavmessage_set.order_by('-timestamp')[0].timestamp
+    
     @property
     def gpsTimestamps(self):
         return [time.mktime(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
@@ -87,10 +97,7 @@ class Flight(models.Model):
     
     @property
     def length(self):
-        if self.mavmessage_set.exists():
-            return self.mavmessage_set.order_by('-timestamp')[0].timestamp-self.mavmessage_set.order_by('timestamp')[0].timestamp
-        else:
-            return 0
+        return self.endTime - self.startTime
     
     def countMessagesByType(self):
         msgTypeCounts=[None]*len(self.messageTypesRecorded)
