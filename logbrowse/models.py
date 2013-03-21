@@ -76,13 +76,13 @@ class Flight(models.Model):
     
     @property
     def startTime(self):
-        if self.mavmessage_set.exists():
-            return self.mavmessage_set.order_by('timestamp')[0].timestamp
+        if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
+            return self.mavmessage_set.exclude(msgType='BAD_DATA').order_by('timestamp')[0].timestamp
     
     @property
     def endTime(self):
-        if self.mavmessage_set.exists():
-            return self.mavmessage_set.order_by('-timestamp')[0].timestamp
+        if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
+            return self.mavmessage_set.exclude(msgType='BAD_DATA').order_by('-timestamp')[0].timestamp
     
     @property
     def gpsTimestamps(self):
