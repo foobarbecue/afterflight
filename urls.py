@@ -16,7 +16,8 @@ urlpatterns = patterns('',
 
     url(r'^flight/(?P<slug>.+)/$',object_detail,{'queryset':Flight.objects.all()}, name='flights'),
     url(r'^flight/$',object_list,{'queryset':Flight.objects.all()}, name='flight_list'),
-    url(r'^timeline/$',timegliderFormatFlights, name='timeline'),
+    url(r'^tg_timeline/$',timegliderFormatFlights, name='timeline'),
+    url(r'^chap_timeline/$',chapTimelineFormatFlights, name='timeline'),
     url(r'^admin/', include(admin.site.urls)),
 )
 

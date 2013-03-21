@@ -1,6 +1,7 @@
 import time, scipy
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 # Create your models here.
 
 MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
@@ -116,7 +117,10 @@ class Flight(models.Model):
 
     #for msgField in messageFieldsRecorded:
         #self.__dict__['%sJSON' % msgField]=lambda: MavDatum.objects.filter(message__flight=self, msgField=msgField).values_list('message__timestamp','value')
-        
+    
+    def get_absolute_url(self):
+        return reverse('flights', args=[self.slug])
+    
     class Meta:
         ordering = ['slug']
 
