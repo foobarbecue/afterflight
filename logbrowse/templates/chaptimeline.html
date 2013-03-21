@@ -1,68 +1,69 @@
 <html>
 <head>
-    <title>Timeline JSON data</title>
-
-    <style type="text/css">
-        body {
-            font-size: 10pt;
-            font-family: verdana, sans, arial, sans-serif;
-        }
-    </style>
-
+    <title>Volcanocopter flight list</title>
     <script type="text/javascript" src="/static/js/timeline.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.min.js"></script>    
     <link rel="stylesheet" type="text/css" href="http://almende.github.com/chap-links-library/js/timeline/timeline.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/flightList.css">
+</head>
+
+<body>
+
+<h1>Flight data overview</h1>
+
+<table id="flights-table">
+    <tr>
+    <th>Logfile</th>
+    <th>Length</th>
+    <th>Comments</th>
+    </tr>
+    {% for flight in object_list %}
+        <tr>
+            <td><a href=flights/{{flight.slug}}>Log {{flight.id}}</a></td>
+            <td>{% if flight.length %}{{flight.length}}{% endif %}</td>
+            <td>{{flight.comments}}</td>
+            <td>{{flight.gpsTimes.0}}</td>
+        </tr>
+    {% endfor %}
+    </table>
+</table>
+
+<div id="mytimeline"></div>
+
+<div id="info"></div>
+
 
     <script type="text/javascript">
         var timeline;
         var data;
-
-        // Called when the Visualization API is loaded.
-        function drawVisualization() {
-            // Create a JSON data table
+        function drawTimeline() {
+            //Drawing the timeline of all flights
             data = {{timeline_data|safe}}
-
-            // specify options
             var options = {
                 'width':  '100%',
                 'height': '300px',
-                'editable': false,   // enable dragging and editing events
+                'editable': false,
                 'style': 'box'
             };
-
-            // Instantiate our timeline object.
             timeline = new links.Timeline(document.getElementById('mytimeline'));
-
-            function onRangeChanged(properties) {
-                document.getElementById('info').innerHTML += 'rangechanged ' +
-                        properties.start + ' - ' + properties.end + '<br>';
-            }
-
-            // attach an event listener using the links events handler
-            links.events.addListener(timeline, 'rangechanged', onRangeChanged);
-
-            // Draw our timeline with the created data and options
             timeline.draw(data, options);
+        };
+        function highlightFlight(event){
+            flightsTableEntry=$("#flights-table>tbody>tr:contains(Log "+event.target.textContent+")")
+            flightsTableEntry.addClass('highlighted')
+            flightsTableEntry[0].scrollIntoView('200')
+        };
+        function unHighlightFlight(event){
+            $("#flights-table>tbody>tr:contains(Log "+event.target.textContent+")").removeClass('highlighted')
+        };
+        $(document).ready(function() {
+        drawTimeline();
+        $(".timeline-event").hover(highlightFlight,unHighlightFlight)
+        
+        
+                
         }
+);    
     </script>
-</head>
-
-<body onload="drawVisualization();">
-<h1>Timeline JSON data</h1>
-<p>
-    This demo shows how to feed the Timeline with JSON data.
-    No Google DataTable is used, and therefore the Google JSAPI is
-    not needed by the Timeline, which can thus be used offline.
-</p>
-
-<div id="mytimeline"></div>
-
-<!-- Information about where the used icons come from -->
-<p style="color:gray; font-size:10px; font-style:italic;">
-    Icons by <a href="http://dryicons.com" target="_blank" title="Aesthetica 2 Icons by DryIcons" style="color:gray;" >DryIcons</a>
-    and <a href="http://www.tpdkdesign.net" target="_blank" title="Refresh Cl Icons by TpdkDesign.net" style="color:gray;" >TpdkDesign.net</a>
-</p>
-
-<div id="info"></div>
-
 </body>
 </html>

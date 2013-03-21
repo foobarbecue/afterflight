@@ -35,6 +35,7 @@ def chapTimelineFormatFlights(throwaway):
                 "group":"flight"})
         except AttributeError:
             pass
+
     for video in FlightVideo.objects.all():
         vidDescription="<a href=%s>" % video.url
         if video.onboard:
@@ -49,4 +50,9 @@ def chapTimelineFormatFlights(throwaway):
                 "group":"flight"})
         except AttributeError:
             pass
-    return render_to_response('chaptimeline.html',{'timeline_data': simplejson.dumps(timelineEventList)})
+   
+    return render_to_response('chaptimeline.html',
+        {
+        'object_list':Flight.objects.all(),
+        'timeline_data': simplejson.dumps(timelineEventList)
+        })
