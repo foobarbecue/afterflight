@@ -2,7 +2,8 @@
 <head>
     <title>Volcanocopter flight list</title>
     <script type="text/javascript" src="/static/js/timeline.js"></script>
-    <script type="text/javascript" src="/static/js/jquery.min.js"></script>    
+    <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.scrollIntoView.min.js"></script>        
     <link rel="stylesheet" type="text/css" href="http://almende.github.com/chap-links-library/js/timeline/timeline.css">
     <link rel="stylesheet" type="text/css" href="/static/css/flightList.css">
 </head>
@@ -12,14 +13,18 @@
 <h1>Flight data overview</h1>
 
 <table id="flights-table">
-    <tr>
-    <th>Logfile</th>
-    <th>Length</th>
-    <th>Comments</th>
+    <tr class="table-header">
+        <th>Logfile</th>
+        <th>Length</th>
+        <th>Comments</th>
     </tr>
+    <!-- To keep the table header floating above the table, we use position: fixed
+    in the css. Then we need this blank table row -->
+    <tr><td height="20px"></td></tr>
+
     {% for flight in object_list %}
         <tr>
-            <td><a href=flights/{{flight.slug}}>Log {{flight.id}}</a></td>
+            <td><a href=/flight/{{flight.slug}}>Log {{flight.id}} </a></td>
             <td>{% if flight.length %}{{flight.length}}{% endif %}</td>
             <td>{{flight.comments}}</td>
             <td>{{flight.gpsTimes.0}}</td>
@@ -48,17 +53,33 @@
             timeline = new links.Timeline(document.getElementById('mytimeline'));
             timeline.draw(data, options);
         };
-        function highlightFlight(event){
-            flightsTableEntry=$("#flights-table>tbody>tr:contains(Log "+event.target.textContent+")")
+        function highlightFlightInTable(event){
+            flightsTableEntry=$("#flights-table>tbody>tr:contains(Log "+event.target.textContent+" )")
             flightsTableEntry.addClass('highlighted')
-            flightsTableEntry[0].scrollIntoView('200')
+            flightsTableEntry.scrollIntoView(100)
         };
-        function unHighlightFlight(event){
+        function unHighlightFlightInTable(event){
             $("#flights-table>tbody>tr:contains(Log "+event.target.textContent+")").removeClass('highlighted')
+        };
+        function highlightFlightOnTL(event){
+            //FIXTHIS. Should be some more direct connection between flights on the table and in the timeline.
+            //Maybe draw the table from the timeline using JS.
+            //Also, should only create selectors once, and then re-use them.
+            event.stopPropagation();
+            flightSeqNum=$("#flights-table>tbody>tr").index(event.currentTarget)
+            timeline.items[flightSeqNum].select()
+            return false;
+        };
+        function unHighlightFlightOnTL(event){
+            event.stopPropagation();
+            flightSeqNum=$("#flights-table>tbody>tr").index(event.currentTarget)
+            timeline.items[flightSeqNum].unselect()
+            return false;
         };
         $(document).ready(function() {
         drawTimeline();
-        $(".timeline-event").hover(highlightFlight,unHighlightFlight)
+        $(".timeline-event").hover(highlightFlightInTable,unHighlightFlightInTable)
+        $("#flights-table>tbody>tr").hover(highlightFlightOnTL,unHighlightFlightOnTL)
         
         
                 

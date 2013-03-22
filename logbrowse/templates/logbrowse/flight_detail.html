@@ -1,18 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link type="text/css" href="http://dev.openlayers.org/addins/scalebar/trunk/theme/default/scalebar-thin.css" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="http://openlayers.org/dev/theme/default/style.css">
+<link type="text/css" href="{{ STATIC_URL }}js/openlayers/theme/default/scalebar-thin.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}js/openlayers/theme/default/style.css">
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}js/jqplot/jquery.jqplot.css" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/flightDetail.css">
+<!-- FIXTHIS: host the css locally -->
+<link rel="stylesheet" type="text/css" href="http://almende.github.com/chap-links-library/js/timeline/timeline.css">
+<!-- FIXTHIS: probably don't need gmaps any more since using Bing -->
 <script src="http://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
 <script src="{{ STATIC_URL }}js/jquery.min.js"></script>
-<script src="{{ STATIC_URL }}js/jquery.flot.js"></script>
 <script src="{{ STATIC_URL }}js/jqplot/jquery.jqplot.min.js"></script>
 <script src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.dateAxisRenderer.min.js"></script>
 <script src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.cursor.min.js"></script>
-<script src="{{ STATIC_URL }}js/OpenLayers.js"></script>
+<script src="{{ STATIC_URL }}js/openlayers/OpenLayers.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/timeline.js"></script>
+<!-- FIXTHIS: host the scalebar addin locally -->
 <script src="http://dev.openlayers.org/addins/scalebar/trunk/lib/OpenLayers/Control/ScaleBar.js"></script>
 <script>
+// FIXTHIS: most of these do not need to be global
 var flightMap, layer, vector_layer, battVltsData,battThrData, hoveredItem, features, flightPathFeatures, limitedLayer, limitedFlightPathDecimal, gpsTimestamps, ytplayer;
 ytplayer=5;
 $(document).ready(function(){
@@ -164,31 +170,43 @@ findBetween=function(startSecs,endSecs,timeList){
 initMap();
 
 
+
 });
 </script>
 
 </head>
 <body>
+<div id="detailsContainer">
+    <h1>Flight details</h1>
+    {{object}}
+    Mavlink messages by type
+    <ul>
+    {% for messageType in object.countMessagesByType %}
+    <li>{{messageType.0}}: {{messageType.1}}</li>
+    {% endfor %}
+    </ul>
+    Total mavlink messages: {{object.mavmessage_set.count}}
 
-{% if object.video %}
-  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>    
+</div>
+<div id="videoContainer">
+    <h1>Video</h1>
+    {% if object.video %}
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>    
+    <div id="ytapiplayer"></div>
+    <embed SRC="file://home/aaron/arducopter/afterflight/media/video/HHD00006.MOV"></embed>
+    {% endif %}
+</div>
+<div id="plotContainer">
+    <h1>Sensor data</h1>
+        <div id="battVltsData" style="width:600px;height:300px"></div>    
+</div>
+<div id="mapContainer">
+    <h1>Map</h1>
+    <div id="map" style="width:600px;height:300px"></div>
+</div>
+<div id="timelineContainer">Timeline loading...</div>
 
-{% endif %}
 
-{{object}}
-Mavlink messages by type
-<ul>
-{% for messageType in object.countMessagesByType %}
-<li>{{messageType.0}}: {{messageType.1}}</li>
-{% endfor %}
-</ul>
-Total mavlink messages: {{object.mavmessage_set.count}}
-
-<div id="battVltsData" style="width:600px;height:300px"></div>
-<div id="map" style="width:600px;height:300px"></div>
-<div id="ytapiplayer"></div>
-<embed SRC="file://home/aaron/arducopter/afterflight/media/video/HHD00006.MOV"></embed>
-
-
+</div>
 </body>
 </html>

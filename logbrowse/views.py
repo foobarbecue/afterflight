@@ -3,7 +3,8 @@ from models import Flight, FlightVideo
 from django.shortcuts import render_to_response
 
 # Create your views here.
-def voltThrPlot(flight):
+def flightDetail(flight):
+    heartbeats=flight.mavmessage_set.filter(msgType='HEARTBEAT')
     return render_to_response('voltPlot.html',{'flight':flight})
 
 def timegliderFormatFlights(throwaway):
