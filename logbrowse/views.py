@@ -3,11 +3,23 @@ from models import Flight, FlightVideo
 from django.shortcuts import render_to_response
 
 # Create your views here.
-def flightDetail(flight):
+def flightDetail(request, slug):
+    flight=Flight.objects.get(slug=slug)
+    timelineEventList=[]
     heartbeats=flight.mavmessage_set.filter(msgType='HEARTBEAT')
-    return render_to_response('voltPlot.html',{'flight':flight})
+    for heartbeat in heartbeats:
+        try:
+            timelineEventList.append(
+                {"start":heartbeat.timestamp.isoformat(),
+                "content":"HB",
+                "group":"Heartbeat"})
+        except AttributeError:
+            pass        
+    return render_to_response('flight_detail.html',{
+        'timeline_data':simplejson.dumps(timelineEventList),
+        'object':flight})
 
-def timegliderFormatFlights(throwaway):
+def timegliderFormatFlights(request):
     flightList=[]
     for flight in Flight.objects.all():
         #optimize this later-- should be single db transaction
@@ -24,7 +36,7 @@ def timegliderFormatFlights(throwaway):
         }
     return render_to_response('timeline.html',{'timeline_data': simplejson.dumps([flightListWheader,])})
 
-def chapTimelineFormatFlights(throwaway):
+def chapTimelineFormatFlights(request):
     timelineEventList=[]
     for flight in Flight.objects.all():
         #optimize this later-- should be single db transaction
@@ -33,7 +45,8 @@ def chapTimelineFormatFlights(throwaway):
                 {"start":flight.startTime.isoformat(),
                 "end":flight.endTime.isoformat(),
                 "content":"<a href=%s>%s</a>" % (flight.get_absolute_url(), flight.id),
-                "group":"flight"})
+                "group":"flight"
+                })
         except AttributeError:
             pass
 

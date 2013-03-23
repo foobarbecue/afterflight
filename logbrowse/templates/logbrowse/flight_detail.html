@@ -19,7 +19,7 @@
 <script src="http://dev.openlayers.org/addins/scalebar/trunk/lib/OpenLayers/Control/ScaleBar.js"></script>
 <script>
 // FIXTHIS: most of these do not need to be global
-var flightMap, layer, vector_layer, battVltsData,battThrData, hoveredItem, features, flightPathFeatures, limitedLayer, limitedFlightPathDecimal, gpsTimestamps, ytplayer;
+var flightMap, layer, vector_layer, battVltsData,battThrData, hoveredItem, features, flightPathFeatures, limitedLayer, limitedFlightPathDecimal, gpsTimestamps, ytplayer, timeline, tlData;
 ytplayer=5;
 $(document).ready(function(){
 
@@ -167,8 +167,23 @@ findBetween=function(startSecs,endSecs,timeList){
     timelist.filter()
     };
 
-initMap();
+function drawTimeline() {
+    //Drawing the timeline of all flights
+    data = {{timeline_data|safe}}
+    tlOptions = {
+        'width':  '100px',
+        'height': '100%',
+        'editable': false,
+        'style': 'dot',
+        'cluster':true;
+    };
+    timeline = new links.Timeline(document.getElementById('mytimeline'));
+    timeline.draw(data, tlOptions);
+};
 
+
+initMap();
+drawTimeline();
 
 
 });
@@ -205,8 +220,6 @@ initMap();
     <div id="map" style="width:600px;height:300px"></div>
 </div>
 <div id="timelineContainer">Timeline loading...</div>
-
-
 </div>
 </body>
 </html>

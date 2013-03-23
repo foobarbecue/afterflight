@@ -14,7 +14,8 @@ urlpatterns = patterns('',
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    url(r'^flight/(?P<slug>.+)/$',object_detail,{'queryset':Flight.objects.all()}, name='flights'),
+    #url(r'^flight/(?P<slug>.+)/$',object_detail,{'queryset':Flight.objects.all()}, name='flights'),
+    url(r'^flight/(?P<slug>.+)/$',flightDetail, name='flights'),
     url(r'^flight/$',object_list,{'queryset':Flight.objects.all()}, name='flight_list'),
     url(r'^tg_timeline/$',timegliderFormatFlights, name='timeline'),
     url(r'^chap_timeline/$',chapTimelineFormatFlights, name='timeline'),
