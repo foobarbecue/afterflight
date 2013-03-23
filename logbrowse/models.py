@@ -1,4 +1,4 @@
-import time, scipy
+import calendar, scipy
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -45,7 +45,7 @@ class Flight(models.Model):
     def thrDataFlot(self):
         vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='throttle')
         vltVals=vltDataQ.values_list('message__timestamp','value')
-        return ','.join([r'[%.1f,%.1f]' % (time.mktime(timestamp.timetuple())*1000,value) for timestamp, value in self.thrData()])
+        return ','.join([r'[%.1f,%.1f]' % (calendar.timegm(timestamp.timetuple())*1000,value) for timestamp, value in self.thrData()])
         
     def battVltsData(self):
         vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='voltage_battery')
@@ -53,7 +53,7 @@ class Flight(models.Model):
         return vltVals
 
     def battVltsDataFlot(self):
-        return ','.join([r'[%.1f,%.1f]' % (time.mktime(timestamp.timetuple())*1000,value) for timestamp, value in self.battVltsData()])
+        return ','.join([r'[%.1f,%.1f]' % (calendar.timegm(timestamp.timetuple())*1000,value) for timestamp, value in self.battVltsData()])
 
     def lats(self):
         lats=MavDatum.objects.filter(message__flight=self, msgField='lat')
@@ -86,7 +86,7 @@ class Flight(models.Model):
     
     @property
     def gpsTimestamps(self):
-        return [time.mktime(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
+        return [calendar.gmtime(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
         
     @property
     def messageTypesRecorded(self):
@@ -145,7 +145,7 @@ class MavDatum(models.Model):
     value=models.FloatField()
 
     def epoch_timestamp(self):
-        return time.mktime(self.message.timestamp.timetuple())*1000
+        return calendar.gmtime(self.message.timestamp.timetuple())*1000
 
     def __unicode__(self):
         return "%s on %s" % (self.msgField, self.message.timestamp)

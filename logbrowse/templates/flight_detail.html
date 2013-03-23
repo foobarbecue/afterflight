@@ -15,6 +15,7 @@
 <script src="/media/js/jqplot/plugins/jqplot.canvasOverlay.min.js"></script>
 <script src="/media/js/jqplot/plugins/jqplot.cursor.min.js"></script>
 <script src="/media/js/openlayers/OpenLayers.js"></script>
+<script src="/media/js/swfobject.js"></script>
 <script type="text/javascript" src="/media/js/timeline.js"></script>
 <!-- FIXTHIS: host the scalebar addin locally -->
 <script src="http://dev.openlayers.org/addins/scalebar/trunk/lib/OpenLayers/Control/ScaleBar.js"></script>
@@ -67,12 +68,12 @@ $("#battVltsData").bind("jqplotDataMouseOver", function(event, srsInd, ptInd, da
 
 var latLonsJSON={{object.latLonsJSON}}
 
-{%if object.video %}
+
 var params = { allowScriptAccess: "always" };
-var atts = { id: "myytplayer" };
-swfobject.embedSWF("http://www.youtube.com/v/tA1cMbcm6bc?enablejsapi=1&playerapiid=ytplayer&version=3",
+var atts = { id: "videoSF0ExLf0hHs" };
+swfobject.embedSWF("http://www.youtube.com/v/SF0ExLf0hHs?enablejsapi=1&playerapiid=ytplayer&version=3",
                     "ytapiplayer", "425", "356", "8", null, null, params, atts);
-{% endif %}
+
 
 {%if object.flightvideo_set %}
 //  This is the new way to deal with video, allowing multiple videos
@@ -244,11 +245,11 @@ drawTimeline();
 </div>
 <div id="videoContainer">
     <h1>Video</h1>
-    {% if object.video %}
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>    
+    
+    
     <div id="ytapiplayer"></div>
-    <embed SRC="file://home/aaron/arducopter/afterflight/media/video/HHD00006.MOV"></embed>
-    {% endif %}
+    
+    
 </div>
 <div id="plotContainer">
     <h1>Sensor data</h1>
