@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link type="text/css" href="{{ STATIC_URL }}js/openlayers/theme/default/scalebar-thin.css" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}js/openlayers/theme/default/style.css">
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}js/jqplot/jquery.jqplot.css" />
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/flightDetail.css">
+<link type="text/css" href="/media/js/openlayers/theme/default/scalebar-thin.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="/media/js/openlayers/theme/default/style.css">
+<link rel="stylesheet" type="text/css" href="/media/js/jqplot/jquery.jqplot.css" />
+<link rel="stylesheet" type="text/css" href="/media/css/flightDetail.css">
 <!-- FIXTHIS: host the css locally -->
 <link rel="stylesheet" type="text/css" href="http://almende.github.com/chap-links-library/js/timeline/timeline.css">
 <!-- FIXTHIS: probably don't need gmaps any more since using Bing -->
 <script src="http://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
-<script src="{{ STATIC_URL }}js/jquery.min.js"></script>
-<script src="{{ STATIC_URL }}js/jqplot/jquery.jqplot.min.js"></script>
-<script src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.dateAxisRenderer.min.js"></script>
-<script src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.cursor.min.js"></script>
-<script src="{{ STATIC_URL }}js/openlayers/OpenLayers.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}js/timeline.js"></script>
+<script src="/media/js/jquery.min.js"></script>
+<script src="/media/js/jqplot/jquery.jqplot.min.js"></script>
+<script src="/media/js/jqplot/plugins/jqplot.dateAxisRenderer.min.js"></script>
+<script src="/media/js/jqplot/plugins/jqplot.canvasOverlay.min.js"></script>
+<script src="/media/js/jqplot/plugins/jqplot.cursor.min.js"></script>
+<script src="/media/js/openlayers/OpenLayers.js"></script>
+<script type="text/javascript" src="/media/js/timeline.js"></script>
 <!-- FIXTHIS: host the scalebar addin locally -->
 <script src="http://dev.openlayers.org/addins/scalebar/trunk/lib/OpenLayers/Control/ScaleBar.js"></script>
 <script>
@@ -26,33 +27,41 @@ $(document).ready(function(){
 gpsTimestamps={{object.gpsTimestamps}}
 battThrData=[[{{object.battVltsDataFlot}}],[{{object.thrDataFlot}}]];
 var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
+min=battThrData[0][0][0]
+max=battThrData[0].slice(-1)[0][0]
 battVltsData = $.jqplot('battVltsData',  battThrData, 
     {
-    title:'{{object}}',
-    axes:{xaxis:{renderer:$.jqplot.DateAxisRenderer,tickInterval:60000},
-          yaxis:{label:'Battery voltage, mV'},
-          y2axis:{label:'Throttle PWM value'}},
-    series:[{showMarker:false},{showMarker:false,yaxis:'y2axis'}],
-    zoom: true,
-    cursor: {
-        show: true,
-        showVerticalLine: true,
+        title:'{{object}}',
+        axes:{xaxis:{renderer:$.jqplot.DateAxisRenderer,tickInterval:60},
+            yaxis:{label:'Battery voltage, mV'},
+            y2axis:{label:'Throttle PWM value'}},
+        series:[{showMarker:false},{showMarker:false,yaxis:'y2axis'}],
         zoom: true,
-        
-    }
+        cursor: {
+            show: true,
+            showVerticalLine: true,
+            zoom: true, 
+        },
+        canvasOverlay: {
+            show:true,
+            objects: [{
+                verticalLine: {
+                    name: 'plotCursor',
+                    x: min
+                    }}]
+        }
     }
  );
 //Workaround for bug described at https://bitbucket.org/cleonello/jqplot/issue/633/jqplotdatahighlight-does-not-work-for-line
 battVltsData.series[0].highlightMouseOver = true;
 
-min=battThrData[0][0][0]
-max=battThrData[0].slice(-1)[0][0]
+
 $("#battVltsData").bind("jqplotDataMouseOver", function(event, srsInd, ptInd, data){
     if(data){
         hoveredItem=data
         decPos=(hoveredItem[0]-min)/(max-min)
         limitedFlightPathDecimal(decPos-0.05,decPos+0.05)
-        seekEverythingTo(20)
+        seekWidgetsTo(20)
     }
 });
 
@@ -74,11 +83,34 @@ swfobject.embedSWF("http://www.youtube.com/v/tA1cMbcm6bc?enablejsapi=1&playerapi
     {% endfor %}
 {% endif %}
 
-function seekEverythingTo(seekSecs) {
+function seekWidgetsTo(seekTime) {
+    seekVideoTo(seekTime)
+    seekPlotTo(seekTime)
+    seekTimelineTo(seekTime)
+}
+
+function seekPlotTo(seekTime) {
+    //TODO very odd to use "battVltsData" for the name of the plot!
+    plotCursor=battVltsData.plugins.canvasOverlay.get('plotCursor')
+    plotCursor.options.x=seekTime
+    battVltsData.plugins.canvasOverlay.draw(battVltsData)
+}
+
+function seekVideoTo(seekTime) {
+    //TODO convert seekTime to seekSecs by subtracting video start time
     {%if object.video %}
     ytplayer = document.getElementById("myytplayer");
     ytplayer.seekTo(seekSecs);
-    {% endif %}
+    {% endif %}    
+}
+
+function seekTimelineTo(seekTime) {
+    
+    battVltsData
+}
+
+function onTimelineBarDragged() {
+    seekWidgetsTo(timeline.customTime)
 }
 
 function initMap() {
@@ -167,18 +199,25 @@ findBetween=function(startSecs,endSecs,timeList){
     timelist.filter()
     };
 
+
+
 function drawTimeline() {
     //Drawing the timeline of all flights
     data = {{timeline_data|safe}}
-    tlOptions = {
-        'width':  '100px',
+    var options = {
+        'width':  '100%',
         'height': '100%',
         'editable': false,
         'style': 'dot',
-        'cluster':true;
+        'cluster': true,
+        'showCustomTime':true
     };
-    timeline = new links.Timeline(document.getElementById('mytimeline'));
-    timeline.draw(data, tlOptions);
+    timeline = new links.Timeline(document.getElementById('timeline'))
+    timeline.draw(data, options)
+    timeline.setCustomTime(min)
+    
+    //Register an event to seek all widgets when the customtime bar is dragged
+    links.events.addListener(timeline, 'timechange', onTimelineBarDragged)
 };
 
 
@@ -219,7 +258,11 @@ drawTimeline();
     <h1>Map</h1>
     <div id="map" style="width:600px;height:300px"></div>
 </div>
-<div id="timelineContainer">Timeline loading...</div>
+<div id="timelineContainer">
+    <div id="timeline">Timeline loading...</div>
+</div>
+
+
 </div>
 </body>
 </html>
