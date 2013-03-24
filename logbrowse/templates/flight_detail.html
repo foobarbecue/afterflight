@@ -24,6 +24,7 @@
 <script>
 // FIXTHIS: most of these do not need to be global
 var flightMap, layer, vector_layer, battVltsData,battThrData, hoveredItem, features, flightPathFeatures, limitedLayer, limitedFlightPathDecimal, gpsTimestamps, ytplayer, timeline, tlData;
+
 ytplayer=5;
 $(document).ready(function(){
 
@@ -87,14 +88,13 @@ function seekWidgetsTo(seekTime) {
 
 function seekPlotTo(seekTime) {
     //TODO very odd to use "battVltsData" for the name of the plot!
+    console.log(seekTime)
     plotCursor=battVltsData.plugins.canvasOverlay.get('plotCursor')
     plotCursor.options.x=seekTime
     battVltsData.plugins.canvasOverlay.draw(battVltsData)
 }
 
 function seekVideoTo(seekTime) {
-    //TODO convert seekTime to seekSecs by subtracting video start time
-    //ytplayer = $("#videoPlayer0")[0];
     {% for video in object.flightvideo_set.all %}
         vidStartTime={{video.startTimeJS}}
         //Youtube API takes seconds, JS timestamps are in ms, so divide by 1000
@@ -104,8 +104,7 @@ function seekVideoTo(seekTime) {
 }
 
 function seekTimelineTo(seekTime) {
-    
-    battVltsData
+    timeline.setCustomTime(seekTime)
 }
 
 function onTimelineBarDragged() {
@@ -223,12 +222,38 @@ function drawTimeline() {
 initMap();
 drawTimeline();
 
+{% for video in object.flightvideo_set.all %}
+seekWidgetsToVidPos{{video.id}}=function() {    
+    vidStartTime={{video.startTimeJS}}
+    seekTime=vidPlayer{{video.id}}.getCurrentTime()*1000+vidStartTime
+    console.log('trying to seek to time ' + parseInt(seekTime))
+    seekPlotTo(seekTime)
+    seekTimelineTo(seekTime)
+}
 
-});
+onPlayer{{video.id}}StateChange = function (newstate) {
+    // If we just started playing
+    console.log("video state changed")
+    if (newstate==1){
+        console.log('started playing')
+        vidSeekPoller=setInterval(seekWidgetsToVidPos{{video.id}}, 250)
+    }
+    else {
+        console.log('stopped playing')
+        clearInterval(vidSeekPoller)
+    }
+}
 
+{% endfor %}
+
+
+}); // end of jquery document.ready function
 function onYouTubePlayerReady(playerId) {
-{% for video in object.flightVideo_set.all %}
+{% for video in object.flightvideo_set.all %}
+    
     vidPlayer{{video.id}} = document.getElementById("vidPlayer{{video.id}}");
+    vidPlayer{{video.id}}.addEventListener("onStateChange","onPlayer{{video.id}}StateChange");
+    console.log("added event listener")
 {% endfor %}
 }
 
@@ -270,7 +295,7 @@ function addVideoToTimeline() {
 </div>
 <div id="mapContainer">
     <h1>Map</h1>
-    <div id="map" style="width:600px;height:300px"></div>
+    <div id="map"></div>
 </div>
 <div id="timelineContainer">
     <div id="timeline">Timeline loading...</div>
