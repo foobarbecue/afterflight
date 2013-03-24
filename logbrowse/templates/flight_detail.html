@@ -96,7 +96,10 @@ function seekVideoTo(seekTime) {
     //TODO convert seekTime to seekSecs by subtracting video start time
     //ytplayer = $("#videoPlayer0")[0];
     {% for video in object.flightvideo_set.all %}
-        vidPlayer{{video.id}}.seekTo(seekTime)
+        vidStartTime={{video.startTimeJS}}
+        //Youtube API takes seconds, JS timestamps are in ms, so divide by 1000
+        vidSeekTime=(seekTime-vidStartTime)/1000
+        vidPlayer{{video.id}}.seekTo(vidSeekTime)
     {% endfor %}
 }
 

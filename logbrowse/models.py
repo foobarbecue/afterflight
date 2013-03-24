@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from datetime import timedelta
+import utils
 # Create your models here.
 
 MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
@@ -137,6 +138,10 @@ class FlightVideo(models.Model):
     def startTime(self):
         return self.flight.startTime+timedelta(seconds=self.delayVsLogstart)
     #For youtube videos, we don't store the endtime. Instead, get it from javascript at runtime.
+    
+    @property
+    def startTimeJS(self):
+        return utils.datetime2jsTstamp(self.startTime)
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
