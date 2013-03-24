@@ -59,9 +59,9 @@ def chapTimelineFormatFlights(request):
         vidDescription+="</a>"
         try:
             timelineEventList.append(
-                {"start":video.flight.startTime+video.delayVsLogstart.isoformat(),
+                {"start":calendar.timegm(video.startTime.timetuple())*1000,
                 "content":vidDescription,
-                "group":"flight"})
+                "group":"video"})
         except AttributeError:
             pass
    

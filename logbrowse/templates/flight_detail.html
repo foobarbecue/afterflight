@@ -15,17 +15,18 @@
 <script src="/media/js/jqplot/plugins/jqplot.canvasOverlay.min.js"></script>
 <script src="/media/js/jqplot/plugins/jqplot.cursor.min.js"></script>
 <script src="/media/js/openlayers/OpenLayers.js"></script>
-<script src="/media/js/swfobject.js"></script>
 <script type="text/javascript" src="/media/js/timeline.js"></script>
 <!-- FIXTHIS: host the scalebar addin locally -->
 <script src="http://dev.openlayers.org/addins/scalebar/trunk/lib/OpenLayers/Control/ScaleBar.js"></script>
+{%if object.flightvideo_set.all %}
+<script src="/media/js/swfobject.js"></script>
+{% endif %}
 <script>
 // FIXTHIS: most of these do not need to be global
 var flightMap, layer, vector_layer, battVltsData,battThrData, hoveredItem, features, flightPathFeatures, limitedLayer, limitedFlightPathDecimal, gpsTimestamps, ytplayer, timeline, tlData;
 ytplayer=5;
 $(document).ready(function(){
 
-gpsTimestamps={{object.gpsTimestamps}}
 battThrData=[[{{object.battVltsDataFlot}}],[{{object.thrDataFlot}}]];
 var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
 min=battThrData[0][0][0]
@@ -68,21 +69,15 @@ $("#battVltsData").bind("jqplotDataMouseOver", function(event, srsInd, ptInd, da
 
 var latLonsJSON={{object.latLonsJSON}}
 
+{% for video in object.flightvideo_set.all %}
+    //javascript for video goes here
+    var params = { allowScriptAccess: "always" };
+    
+    var atts = { id: "vidPlayer{{video.id}}", class:"vidPlayer" };
+    swfobject.embedSWF("{{video.url}}?enablejsapi=1&playerapiid=apiForVid{{video}}&version=3",
+                        "vidPlayer{{video.id}}", "425", "356", "8", null, null, params, atts);
+{% endfor %}
 
-var params = { allowScriptAccess: "always" };
-var atts = { id: "videoSF0ExLf0hHs" };
-swfobject.embedSWF("http://www.youtube.com/v/SF0ExLf0hHs?enablejsapi=1&playerapiid=ytplayer&version=3",
-                    "ytapiplayer", "425", "356", "8", null, null, params, atts);
-
-
-{%if object.flightvideo_set %}
-//  This is the new way to deal with video, allowing multiple videos
-    {% for video in flightvideo_set %}
-    <video>
-        <source src="/video/HHD00006.MOV">
-    </video>
-    {% endfor %}
-{% endif %}
 
 function seekWidgetsTo(seekTime) {
     seekVideoTo(seekTime)
@@ -99,10 +94,10 @@ function seekPlotTo(seekTime) {
 
 function seekVideoTo(seekTime) {
     //TODO convert seekTime to seekSecs by subtracting video start time
-    {%if object.video %}
-    ytplayer = document.getElementById("myytplayer");
-    ytplayer.seekTo(seekSecs);
-    {% endif %}    
+    //ytplayer = $("#videoPlayer0")[0];
+    {% for video in object.flightvideo_set.all %}
+        vidPlayer{{video.id}}.seekTo(seekTime)
+    {% endfor %}
 }
 
 function seekTimelineTo(seekTime) {
@@ -227,6 +222,21 @@ drawTimeline();
 
 
 });
+
+function onYouTubePlayerReady(playerId) {
+{% for video in object.flightVideo_set.all %}
+    vidPlayer{{video.id}} = document.getElementById("vidPlayer{{video.id}}");
+{% endfor %}
+}
+
+function addVideoToTimeline() {
+    //TODO make this handle multiple videos
+    {% if flight.flightVideo_set.0 %}
+        startime={{flight.flightVideo_set.0.startTime}}
+        endtime={{flight.flightVideo_set.0.startTime}}+ytplayer.getDuration()
+    {% endif %}
+}
+
 </script>
 
 </head>
@@ -246,9 +256,9 @@ drawTimeline();
 <div id="videoContainer">
     <h1>Video</h1>
     
-    
-    <div id="ytapiplayer"></div>
-    
+    {% for video in object.flightvideo_set.all %}
+        <div id="vidPlayer{{video.id}}"></div>
+    {% endfor %}
     
 </div>
 <div id="plotContainer">

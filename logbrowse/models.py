@@ -2,6 +2,7 @@ import calendar, scipy
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from datetime import timedelta
 # Create your models here.
 
 MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
@@ -86,7 +87,7 @@ class Flight(models.Model):
     
     @property
     def gpsTimestamps(self):
-        return [calendar.gmtime(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
+        return [calendar.timegm(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
         
     @property
     def messageTypesRecorded(self):
@@ -126,10 +127,16 @@ class Flight(models.Model):
 
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
-    delayVsLogstart=models.DateTimeField(blank=True, null=True)
+    #In seconds
+    delayVsLogstart=models.FloatField(blank=True, null=True)
     onboard=models.BooleanField(blank=True, default=True)
     url=models.URLField(blank=True, null=True)
     videoFile=models.FileField(blank=True, null=True, upload_to='video')
+    
+    @property
+    def startTime(self):
+        return self.flight.startTime+timedelta(seconds=self.delayVsLogstart)
+    #For youtube videos, we don't store the endtime. Instead, get it from javascript at runtime.
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
