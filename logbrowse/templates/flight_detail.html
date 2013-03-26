@@ -25,6 +25,13 @@
 // FIXTHIS: most of these do not need to be global
 var flightMap, layer, vector_layer, battVltsData,battThrData, hoveredItem, features, flightPathFeatures, limitedLayer, limitedFlightPathDecimal, gpsTimestamps, ytplayer, timeline, tlData;
 
+var WGS84 = new OpenLayers.Projection('EPSG:4326');
+var MERCATOR = new OpenLayers.Projection('EPSG:900913');
+var size = new OpenLayers.Size(21, 25);
+var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
+var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
+
+
 ytplayer=5;
 $(document).ready(function(){
 
@@ -68,7 +75,7 @@ $("#battVltsData").bind("jqplotDataMouseOver", function(event, srsInd, ptInd, da
     }
 });
 
-var latLonsJSON={{object.latLonsJSON}}
+latLonsJSON={{object.latLonsJSON}}
 
 {% for video in object.flightvideo_set.all %}
     //javascript for video goes here
@@ -84,6 +91,17 @@ function seekWidgetsTo(seekTime) {
     seekVideoTo(seekTime)
     seekPlotTo(seekTime)
     seekTimelineTo(seekTime)
+    seekMapTo(seekTime)
+}
+
+function seekMapTo(seekTime) {
+    // Lookup the timestamp at the nearest second
+    currentPos=latLonsJSON[gpsTimestamps.indexOf(Math.round(seekTime/1000)*1000)]
+    curPosMarker=new OpenLayers.Marker(new OpenLayers.LonLat(currentPos), icon.clone())
+    //if exists, remove, then
+    curPosLayer.clearMarkers();
+    curPosLayer.addMarker(curPosMarker);
+    curPosLayer.redraw();
 }
 
 function seekPlotTo(seekTime) {
@@ -170,10 +188,11 @@ function initMap() {
                 });
     vector_layer = new OpenLayers.Layer.Vector("Flight path",{ style:{strokeColor:"#FF0000",strokeWidth:1, projection: new OpenLayers.Projection("EPSG:4326")}, });
     limitedLayer = new OpenLayers.Layer.Vector("Selected flight path",{ style:{strokeColor:"#0000FF",strokeWidth:2, projection: new OpenLayers.Projection("EPSG:4326")}, });
+    curPosLayer = new OpenLayers.Layer.Markers("Current position",{ style:{strokeColor:"#0000FF",strokeWidth:2, projection: new OpenLayers.Projection("EPSG:4326")}, });
     
     flightPathFeatures=geojson_format.read(flightPathFeaturesJSON);
     vector_layer.addFeatures(flightPathFeatures);
-    flightMap.addLayers([bhybrid, baerial, broad, vector_layer,limitedLayer]);
+    flightMap.addLayers([bhybrid, baerial, broad, vector_layer, limitedLayer, curPosLayer]);
     
     flightMap.zoomToExtent(vector_layer.getDataExtent());
     };
@@ -246,6 +265,19 @@ onPlayer{{video.id}}StateChange = function (newstate) {
 
 {% endfor %}
 
+//+ Carlos R. L. Rodrigues
+//@ http://jsfromhell.com/array/nearest-number [rev. #0]
+
+function getNearestNumber(a, n){
+    if((l = a.length) < 2)
+        return l - 1;
+    for(var l, p = Math.abs(a[--l] - n); l--;)
+        if(p < (p = Math.abs(a[l] - n)))
+            break;
+    return l + 1;
+}
+
+gpsTimestamps={{object.gpsTimestamps|safe}}
 
 }); // end of jquery document.ready function
 function onYouTubePlayerReady(playerId) {

@@ -88,7 +88,9 @@ class Flight(models.Model):
     
     @property
     def gpsTimestamps(self):
-        return [calendar.timegm(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
+        ts=[calendar.timegm(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
+        #Have to convert to a string, otherwise the L for long ends up in javascript...
+        return '['+', '.join(['%d' % timestamp for timestamp in ts])+']'
         
     @property
     def messageTypesRecorded(self):
