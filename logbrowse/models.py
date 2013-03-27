@@ -58,11 +58,11 @@ class Flight(models.Model):
         return ','.join([r'[%.1f,%.1f]' % (calendar.timegm(timestamp.timetuple())*1000,value) for timestamp, value in self.battVltsData()])
 
     def lats(self):
-        lats=MavDatum.objects.filter(message__flight=self, msgField='lat')
+        lats=MavDatum.objects.filter(message__flight=self, msgField='lat', message__msgType='GLOBAL_POSITION_INT')
         return scipy.array(lats.values_list('value', flat=True))/10000000
         
     def lons(self):
-        lons=MavDatum.objects.filter(message__flight=self, msgField='lon')
+        lons=MavDatum.objects.filter(message__flight=self, msgField='lon', message__msgType='GLOBAL_POSITION_INT')
         return scipy.array(lons.values_list('value', flat=True))/10000000
 
     def latLonsFlot(self):
@@ -74,7 +74,7 @@ class Flight(models.Model):
     
     @property
     def gpsTimes(self):
-        return MavMessage.objects.filter(flight=self,msgType='GPS_RAW_INT').values_list('timestamp',flat=True)
+        return MavMessage.objects.filter(flight=self,msgType='GLOBAL_POSITION_INT').values_list('timestamp',flat=True)
     
     @property
     def startTime(self):
@@ -88,9 +88,10 @@ class Flight(models.Model):
     
     @property
     def gpsTimestamps(self):
-        ts=[calendar.timegm(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
-        #Have to convert to a string, otherwise the L for long ends up in javascript...
-        return '['+', '.join(['%d' % timestamp for timestamp in ts])+']'
+        longTstamps=[calendar.timegm(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
+        #unfortunately the timestamps end up with L for 'long' in the JS unless we remove them here.
+        #Actually, could probably do the multiplication by 1000 to convert to JS timestamp on the client side.
+        return str(longTstamps).replace('L','')
         
     @property
     def messageTypesRecorded(self):

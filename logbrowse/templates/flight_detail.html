@@ -71,7 +71,7 @@ $("#battVltsData").bind("jqplotDataMouseOver", function(event, srsInd, ptInd, da
         hoveredItem=data
         decPos=(hoveredItem[0]-min)/(max-min)
         limitedFlightPathDecimal(decPos-0.05,decPos+0.05)
-        seekWidgetsTo(20)
+        //seekWidgetsTo(20)
     }
 });
 
@@ -94,11 +94,11 @@ function seekWidgetsTo(seekTime) {
     seekMapTo(seekTime)
 }
 
-function seekMapTo(seekTime) {
+seekMapTo=function(seekTime) {
     // Lookup the timestamp at the nearest second
     currentPos=latLonsJSON[gpsTimestamps.indexOf(Math.round(seekTime/1000)*1000)]
-    curPosMarker=new OpenLayers.Marker(new OpenLayers.LonLat(currentPos), icon.clone())
-    //if exists, remove, then
+    console.log(currentPos)
+    curPosMarker=new OpenLayers.Marker(new OpenLayers.LonLat(currentPos).transform(WGS84,MERCATOR), icon.clone())
     curPosLayer.clearMarkers();
     curPosLayer.addMarker(curPosMarker);
     curPosLayer.redraw();
@@ -248,6 +248,7 @@ seekWidgetsToVidPos{{video.id}}=function() {
     console.log('trying to seek to time ' + parseInt(seekTime))
     seekPlotTo(seekTime)
     seekTimelineTo(seekTime)
+    seekMapTo(seekTime)
 }
 
 onPlayer{{video.id}}StateChange = function (newstate) {
