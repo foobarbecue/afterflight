@@ -1,3 +1,17 @@
+   #Copyright 2013 Aaron Curtis
+
+   #Licensed under the Apache License, Version 2.0 (the "License");
+   #you may not use this file except in compliance with the License.
+   #You may obtain a copy of the License at
+
+       #http://www.apache.org/licenses/LICENSE-2.0
+
+   #Unless required by applicable law or agreed to in writing, software
+   #distributed under the License is distributed on an "AS IS" BASIS,
+   #WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   #See the License for the specific language governing permissions and
+   #limitations under the License.
+
 '''
 Reads a .tlog using pymavlink into the afterflight database
 todo: get_or_creates should be checking MAV id
@@ -51,6 +65,6 @@ def readInLog(filepath):
 def readInDirectory(log_dir_path):
     log_filenames=os.listdir(log_dir_path)
     for log_filename in log_filenames:
-        if log_filename.endswith('.tlog') and log_filename.startswith('2013'):
+        if log_filename.endswith('.tlog'):
             print 'reading %s' % log_filename
             readInLog(os.path.join(log_dir_path, log_filename))
