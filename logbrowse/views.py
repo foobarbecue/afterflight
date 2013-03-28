@@ -2,6 +2,7 @@ from django.utils import simplejson
 from models import Flight, FlightVideo
 from django.shortcuts import render_to_response
 import calendar
+from utils import dt2jsts
 # Create your views here.
 def flightDetail(request, slug):
     flight=Flight.objects.get(slug=slug)
@@ -10,7 +11,7 @@ def flightDetail(request, slug):
     for heartbeat in heartbeats:
         try:
             timelineEventList.append(
-                {"start":calendar.timegm(heartbeat.timestamp.timetuple())*1000,
+                {"start":dt2jsts(heartbeat.timestamp),
                 "content":"HB",
                 "group":"Heartbeat"})
         except AttributeError:
@@ -26,8 +27,8 @@ def timegliderFormatFlights(request):
         flightList.append(
             {"id":flight.pk,
             "title":flight.slug,
-            "startdate":calendar.timegm(flight.startTime.timetuple()),
-            "enddate":calendar.timegm(flight.endTime.timetuple())})
+            "startdate":dt2jsts(flight.startTime),
+            "enddate":dt2jsts(flight.endTime)})
     #add the timeline header information
     flightListWheader={
         'id':'flight_timeline',
@@ -59,7 +60,7 @@ def chapTimelineFormatFlights(request):
         vidDescription+="</a>"
         try:
             timelineEventList.append(
-                {"start":calendar.timegm(video.startTime.timetuple())*1000,
+                {"start":dt2jsts(video.startTime),
                 "content":vidDescription,
                 "group":"video"})
         except AttributeError:

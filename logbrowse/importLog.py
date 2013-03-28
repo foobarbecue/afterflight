@@ -51,6 +51,6 @@ def readInLog(filepath):
 def readInDirectory(log_dir_path):
     log_filenames=os.listdir(log_dir_path)
     for log_filename in log_filenames:
-        if log_filename.endswith('.tlog'):
+        if log_filename.endswith('.tlog') and log_filename.startswith('2013'):
             print 'reading %s' % log_filename
             readInLog(os.path.join(log_dir_path, log_filename))

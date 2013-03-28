@@ -94,9 +94,29 @@ function seekWidgetsTo(seekTime) {
     seekMapTo(seekTime)
 }
 
+getClosestIndex = function(a, x) {
+    // This is a binary search, returning the index of the value just below the input x using the list a
+    var low = 0, hi = a.length-1;
+    while (hi - low > 1) {
+        var mid = Math.round((low + hi)/2);
+        if (a[mid] <= x) {
+            low = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    if (a[low] == x) hi = low;
+    console.log('closest value to ' + x + ' is ' + a[low] + 'at index' + low)
+    return low
+    
+}
+
 seekMapTo=function(seekTime) {
     // Lookup the timestamp at the nearest second
-    currentPos=latLonsJSON[gpsTimestamps.indexOf(Math.round(seekTime/1000)*1000)]
+    //currentPos=latLonsJSON[gpsTimestamps.indexOf(Math.round(seekTime/1000)*1000)]
+    
+    //Now that we have millisecond precision, 
+    currentPos=latLonsJSON[getClosestIndex(gpsTimestamps,seekTime)]
     console.log(currentPos)
     curPosMarker=new OpenLayers.Marker(new OpenLayers.LonLat(currentPos).transform(WGS84,MERCATOR), icon.clone())
     curPosLayer.clearMarkers();
@@ -265,18 +285,6 @@ onPlayer{{video.id}}StateChange = function (newstate) {
 }
 
 {% endfor %}
-
-//+ Carlos R. L. Rodrigues
-//@ http://jsfromhell.com/array/nearest-number [rev. #0]
-
-function getNearestNumber(a, n){
-    if((l = a.length) < 2)
-        return l - 1;
-    for(var l, p = Math.abs(a[--l] - n); l--;)
-        if(p < (p = Math.abs(a[l] - n)))
-            break;
-    return l + 1;
-}
 
 gpsTimestamps={{object.gpsTimestamps|safe}}
 

@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from datetime import timedelta
-import utils
+from utils import dt2jsts
 # Create your models here.
 
 MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
@@ -45,9 +45,7 @@ class Flight(models.Model):
         return vltVals
 
     def thrDataFlot(self):
-        vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='throttle')
-        vltVals=vltDataQ.values_list('message__timestamp','value')
-        return ','.join([r'[%.1f,%.1f]' % (calendar.timegm(timestamp.timetuple())*1000,value) for timestamp, value in self.thrData()])
+        return ','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in self.thrData()])
         
     def battVltsData(self):
         vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='voltage_battery')
@@ -55,14 +53,15 @@ class Flight(models.Model):
         return vltVals
 
     def battVltsDataFlot(self):
-        return ','.join([r'[%.1f,%.1f]' % (calendar.timegm(timestamp.timetuple())*1000,value) for timestamp, value in self.battVltsData()])
+        return ','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in self.battVltsData()])
 
     def lats(self):
-        lats=MavDatum.objects.filter(message__flight=self, msgField='lat', message__msgType='GLOBAL_POSITION_INT')
+        # The 'order_by' should be unnecessary, since it's already in the model's __meta__, but seems only to work this way. TODO
+        lats=MavDatum.objects.filter(message__flight=self, msgField='lat', message__msgType='GLOBAL_POSITION_INT').order_by('message__timestamp')
         return scipy.array(lats.values_list('value', flat=True))/10000000
         
     def lons(self):
-        lons=MavDatum.objects.filter(message__flight=self, msgField='lon', message__msgType='GLOBAL_POSITION_INT')
+        lons=MavDatum.objects.filter(message__flight=self, msgField='lon', message__msgType='GLOBAL_POSITION_INT').order_by('message__timestamp')
         return scipy.array(lons.values_list('value', flat=True))/10000000
 
     def latLonsFlot(self):
@@ -74,7 +73,7 @@ class Flight(models.Model):
     
     @property
     def gpsTimes(self):
-        return MavMessage.objects.filter(flight=self,msgType='GLOBAL_POSITION_INT').values_list('timestamp',flat=True)
+        return MavMessage.objects.filter(flight=self,msgType='GLOBAL_POSITION_INT').order_by('timestamp').values_list('timestamp',flat=True)
     
     @property
     def startTime(self):
@@ -88,10 +87,11 @@ class Flight(models.Model):
     
     @property
     def gpsTimestamps(self):
-        longTstamps=[calendar.timegm(timestamp.timetuple())*1000 for timestamp in self.gpsTimes]
+        longTstamps=[dt2jsts(timestamp) for timestamp in self.gpsTimes]
         #unfortunately the timestamps end up with L for 'long' in the JS unless we remove them here.
         #Actually, could probably do the multiplication by 1000 to convert to JS timestamp on the client side.
-        return str(longTstamps).replace('L','')
+        #return str(longTstamps).replace('L','')
+        return [dt2jsts(timestamp) for timestamp in self.gpsTimes]
         
     @property
     def messageTypesRecorded(self):
@@ -144,7 +144,7 @@ class FlightVideo(models.Model):
     
     @property
     def startTimeJS(self):
-        return utils.datetime2jsTstamp(self.startTime)
+        return dt2jsts(self.startTime)
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
@@ -164,6 +164,9 @@ class MavDatum(models.Model):
 
     def __unicode__(self):
         return "%s on %s" % (self.msgField, self.message.timestamp)
+        
+    def __meta__(self):
+        ordering = ['message__timestamp']
     
 class Battery(models.Model):
     cells=models.IntegerField(blank=True, null=True)
