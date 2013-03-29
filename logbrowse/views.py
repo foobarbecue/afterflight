@@ -15,7 +15,7 @@
 from django.utils import simplejson
 from models import Flight, FlightVideo
 from django.shortcuts import render_to_response
-import calendar
+import calendar, datetime
 from utils import dt2jsts
 # Create your views here.
 def flightDetail(request, slug):
@@ -29,7 +29,18 @@ def flightDetail(request, slug):
                 "content":"HB",
                 "group":"Heartbeat"})
         except AttributeError:
-            pass        
+            pass
+    for video in flight.flightvideo_set.all():
+        #try:
+            timelineDictForVid={"start":dt2jsts(flight.startTime+datetime.timedelta(seconds=video.delayVsLogstart)),
+                "group":"Video"}
+            if video.onboard:
+                timelineDictForVid['content']='Onboard video start'
+            else:
+                timelineDictForVid['content']='Offboard video start'
+            timelineEventList.append(timelineDictForVid)
+        #except AttributeError:
+            #pass
     return render_to_response('flight_detail.html',{
         'timeline_data':simplejson.dumps(timelineEventList),
         'object':flight})

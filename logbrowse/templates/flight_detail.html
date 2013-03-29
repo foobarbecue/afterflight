@@ -50,6 +50,7 @@ $(document).ready(function(){
 latLonsJSON={{object.latLonsJSON}}
 plotData=[[{{object.battVltsDataFlot}}],[{{object.thrDataFlot}}]];
 gpsTimestamps={{object.gpsTimestamps|safe}}
+tlData = {{timeline_data|safe}}
 
 // Setup the sensor data plot
     min=plotData[0][0][0]
@@ -164,8 +165,6 @@ initMap();
 
 //Draw the timeline of flight events
 function drawTimeline() {
-    
-    data = {{timeline_data|safe}}
     var options = {
         'width':  '100%',
         'height': '100%',
@@ -175,7 +174,7 @@ function drawTimeline() {
         'showCustomTime':true
     };
     timeline = new links.Timeline(document.getElementById('timeline'))
-    timeline.draw(data, options)
+    timeline.draw(tlData, options)
     timeline.setCustomTime(min)
     
     //Register an event to seek all widgets when the customtime bar is dragged
