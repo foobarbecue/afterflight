@@ -19,12 +19,18 @@
     <script type="text/javascript" src="/static/js/timeline.js"></script>
     <script type="text/javascript" src="/static/js/jquery.min.js"></script>
     <script type="text/javascript" src="/static/js/jquery.scrollIntoView.min.js"></script>        
-    <link rel="stylesheet" type="text/css" href="http://almende.github.com/chap-links-library/js/timeline/timeline.css">
     <link rel="stylesheet" type="text/css" href="/static/css/flightList.css">
+    <script src="/media/js/openlayers/OpenLayers.js"></script>
+    <script type="text/javascript" src="/media/js/timeline.js"></script>
+    <script src="/media/js/openlayers/lib/Control/ScaleBar.js"></script>
 </head>
 
 <body>
 
+
+
+
+<div id="info">
 <h1>Flight data overview</h1>
 
 <table id="flights-table">
@@ -48,10 +54,11 @@
     </table>
 </table>
 
-<div id="mytimeline"></div>
+</div>
 
-<div id="info"></div>
+<div id="allFlightsMap"></div>
 
+<div id="allFlightsTimeline"></div>
 
     <script type="text/javascript">
         var timeline;
@@ -60,12 +67,10 @@
             //Drawing the timeline of all flights
             data = {{timeline_data|safe}}
             var options = {
-                'width':  '100%',
-                'height': '300px',
                 'editable': false,
                 'style': 'box'
             };
-            timeline = new links.Timeline(document.getElementById('mytimeline'));
+            timeline = new links.Timeline(document.getElementById('allFlightsTimeline'));
             timeline.draw(data, options);
         };
         function highlightFlightInTable(event){
@@ -91,7 +96,42 @@
             timeline.items[flightSeqNum].unselect()
             return false;
         };
+// Draw map of flight path
+var WGS84 = new OpenLayers.Projection('EPSG:4326');
+var MERCATOR = new OpenLayers.Projection('EPSG:900913');
+var size = new OpenLayers.Size(21, 25);
+var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
+var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
+function initMap() {
+
+
+    flightMap = new OpenLayers.Map('allFlightsMap');
+    flightMap.addControl(new OpenLayers.Control.LayerSwitcher());
+    flightMap.addControl(new OpenLayers.Control.ScaleLine());
+    var flightStartLocsJSON = {
+        "type": "FeatureCollection", 
+        "features": [
+        {
+            "type": "Feature", 
+            "geometry":
+                {
+                    "type": "MultiPoint", 
+                    "coordinates": {{flightStartLocs}}
+                }, 
+            
+        },]
+    };
+    var geojson_format = new OpenLayers.Format.GeoJSON();
+    vector_layer = new OpenLayers.Layer.Vector("Flight path",{ style:{strokeColor:"#FF0000",strokeWidth:1, projection: WGS84}});
+    flightStartLocs=geojson_format.read(flightStartLocsJSON);
+    osm_layer=new OpenLayers.Layer.OSM();
+    vector_layer.addFeatures(flightStartLocs);
+    flightMap.addLayers([osm_layer, vector_layer]);
+    flightMap.zoomToExtent(vector_layer.getDataExtent());
+    };
+
         $(document).ready(function() {
+        initMap();
         drawTimeline();
         $(".timeline-event").hover(highlightFlightInTable,unHighlightFlightInTable)
         $("#flights-table>tbody>tr").hover(highlightFlightOnTL,unHighlightFlightOnTL)

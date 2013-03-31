@@ -168,6 +168,10 @@ class MavMessage(models.Model):
     def __unicode__(self):
         return "%s on %s" % (self.msgType, self.timestamp)
     
+    def __meta__(self):
+        get_latest_by='timestamp'
+        ordering = ['timestamp']
+    
 class MavDatum(models.Model):
     message=models.ForeignKey('MavMessage')
     msgField=models.CharField(max_length=40)
@@ -180,7 +184,8 @@ class MavDatum(models.Model):
         return "%s on %s" % (self.msgField, self.message.timestamp)
         
     def __meta__(self):
-        ordering = ['message__timestamp']
+        get_latest_by=['message__timestamp']
+        ordering = ['message']
     
 class Battery(models.Model):
     cells=models.IntegerField(blank=True, null=True)
@@ -194,3 +199,17 @@ class Airframe(models.Model):
     partModel=models.CharField(blank=True, null=True, max_length=40)
     mfgSerNum=models.CharField(blank=True, null=True,max_length=40)
     persSerNum=models.CharField(max_length=40)
+
+class FlightEvent(models.Model):
+    EVENT_TYPES=(
+        ('TAKEOFF','Takeoff'),
+        ('LANDING','Landing'),
+        ('CRASH','Hard landing'),
+        ('FLIP','Flip')
+    )
+    flight=models.ForeignKey(Flight)
+    eventType=models.CharField(blank=True, null=True, max_length=40, choices=EVENT_TYPES)
+    comment=models.TextField()
+    automatically_detected=models.BooleanField(default=False)
+    timestamp=models.DateTimeField()
+    

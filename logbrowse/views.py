@@ -13,7 +13,7 @@
    #limitations under the License.
 
 from django.utils import simplejson
-from models import Flight, FlightVideo
+from models import Flight, FlightVideo, MavDatum
 from django.shortcuts import render_to_response
 import calendar, datetime
 from utils import dt2jsts
@@ -31,16 +31,22 @@ def flightDetail(request, slug):
         except AttributeError:
             pass
     for video in flight.flightvideo_set.all():
-        #try:
-            timelineDictForVid={"start":dt2jsts(flight.startTime+datetime.timedelta(seconds=video.delayVsLogstart)),
-                "group":"Video"}
-            if video.onboard:
-                timelineDictForVid['content']='Onboard video start'
-            else:
-                timelineDictForVid['content']='Offboard video start'
-            timelineEventList.append(timelineDictForVid)
-        #except AttributeError:
-            #pass
+        startTime=dt2jsts(flight.startTime+datetime.timedelta(seconds=video.delayVsLogstart))
+        timelineDictForVid={"start":startTime,"group":"Video"}
+        if video.onboard:
+            timelineDictForVid['content']='Onboard video start'
+        else:
+            timelineDictForVid['content']='Offboard video start'
+        timelineEventList.append(timelineDictForVid)
+
+    for evt in flight.flightevent_set.all():
+        timelineDictForEvt={"start":dt2jsts(evt.timestamp), "content":evt.get_eventType_display()}
+        if evt.automatically_detected:
+            timelineDictForEvt['group']='Flight events'
+        else:
+            timelineDictForEvt['group']='Annotations'
+        timelineEventList.append(timelineDictForEvt)
+
     return render_to_response('flight_detail.html',{
         'timeline_data':simplejson.dumps(timelineEventList),
         'object':flight})
@@ -64,6 +70,7 @@ def timegliderFormatFlights(request):
 
 def flightIndex(request):
     timelineEventList=[]
+    flightStartLocs=[]
     for flight in Flight.objects.all():
         #optimize this later-- should be single db transaction
         try:
@@ -75,6 +82,16 @@ def flightIndex(request):
                 })
         except AttributeError:
             pass
+        # Get the last GPS coordinate for each flight to add to the flight index map.
+        # We use the last one because it's more likely to be a better fix that the first.
+        try:
+            lat=MavDatum.objects.filter(msgField='lat',message__flight=flight).latest(field_name='message__timestamp').value
+            lon=MavDatum.objects.filter(msgField='lon',message__flight=flight).latest(field_name='message__timestamp').value
+            flightStartLocs.append([lon,lat])
+        #should be except DoesNotExist, find where to import that from
+        except:
+            pass
+            
 
     for video in FlightVideo.objects.all():
         vidDescription="<a href=%s>" % video.url
@@ -94,5 +111,6 @@ def flightIndex(request):
     return render_to_response('flight_list.html',
         {
         'object_list':Flight.objects.all(),
-        'timeline_data': simplejson.dumps(timelineEventList)
+        'timeline_data': simplejson.dumps(timelineEventList),
+        'flightStartLocs': flightStartLocs
         })
