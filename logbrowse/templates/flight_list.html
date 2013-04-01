@@ -22,6 +22,7 @@
     <link rel="stylesheet" type="text/css" href="/static/css/flightList.css">
     <script src="/media/js/openlayers/OpenLayers.js"></script>
     <script type="text/javascript" src="/media/js/timeline.js"></script>
+    <link rel="stylesheet" type="text/css" href="/media/css/timeline.css">
     <script src="/media/js/openlayers/lib/Control/ScaleBar.js"></script>
 </head>
 
@@ -105,7 +106,7 @@ var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', s
 function initMap() {
 
 
-    flightMap = new OpenLayers.Map('allFlightsMap');
+    flightMap = new OpenLayers.Map('allFlightsMap',{projection: MERCATOR});
     flightMap.addControl(new OpenLayers.Control.LayerSwitcher());
     flightMap.addControl(new OpenLayers.Control.ScaleLine());
     var flightStartLocsJSON = {
@@ -121,8 +122,11 @@ function initMap() {
             
         },]
     };
-    var geojson_format = new OpenLayers.Format.GeoJSON();
-    vector_layer = new OpenLayers.Layer.Vector("Flight path",{ style:{strokeColor:"#FF0000",strokeWidth:1, projection: WGS84}});
+    var geojson_format = new OpenLayers.Format.GeoJSON({
+                    'internalProjection': MERCATOR,
+                    'externalProjection': WGS84
+                });
+    vector_layer = new OpenLayers.Layer.Vector("Flights");
     flightStartLocs=geojson_format.read(flightStartLocsJSON);
     osm_layer=new OpenLayers.Layer.OSM();
     vector_layer.addFeatures(flightStartLocs);

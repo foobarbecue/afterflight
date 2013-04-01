@@ -70,13 +70,13 @@ class Flight(models.Model):
         return ','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in self.battVltsData()])
 
     def lats(self):
-        # The 'order_by' should be unnecessary, since it's already in the model's __meta__, but seems only to work this way. TODO
+        # The 'order_by' should be unnecessary, since it's already in the model's Meta, but seems only to work this way. *might be fixed now TODO
         lats=MavDatum.objects.filter(message__flight=self, msgField='lat', message__msgType='GLOBAL_POSITION_INT').order_by('message__timestamp')
-        return scipy.array(lats.values_list('value', flat=True))/10000000
+        return scipy.array(lats.values_list('value', flat=True))/1e7
         
     def lons(self):
         lons=MavDatum.objects.filter(message__flight=self, msgField='lon', message__msgType='GLOBAL_POSITION_INT').order_by('message__timestamp')
-        return scipy.array(lons.values_list('value', flat=True))/10000000
+        return scipy.array(lons.values_list('value', flat=True))/1e7
 
     def latLonsFlot(self):
         return ','.join([r'[%.1f,%.1f]' % latLon for latLon in zip(self.lats(), self.lons())])
@@ -168,7 +168,7 @@ class MavMessage(models.Model):
     def __unicode__(self):
         return "%s on %s" % (self.msgType, self.timestamp)
     
-    def __meta__(self):
+    class Meta:
         get_latest_by='timestamp'
         ordering = ['timestamp']
     
@@ -183,7 +183,7 @@ class MavDatum(models.Model):
     def __unicode__(self):
         return "%s on %s" % (self.msgField, self.message.timestamp)
         
-    def __meta__(self):
+    class Meta:
         get_latest_by=['message__timestamp']
         ordering = ['message']
     

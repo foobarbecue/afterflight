@@ -85,8 +85,9 @@ def flightIndex(request):
         # Get the last GPS coordinate for each flight to add to the flight index map.
         # We use the last one because it's more likely to be a better fix that the first.
         try:
-            lat=MavDatum.objects.filter(msgField='lat',message__flight=flight).latest(field_name='message__timestamp').value
-            lon=MavDatum.objects.filter(msgField='lon',message__flight=flight).latest(field_name='message__timestamp').value
+            latestGPSmsg=flight.mavmessage_set.filter(msgType="GLOBAL_POSITION_INT").latest()
+            lat=latestGPSmsg.mavdatum_set.get(msgField='lat').value/1e7
+            lon=latestGPSmsg.mavdatum_set.get(msgField='lon').value/1e7
             flightStartLocs.append([lon,lat])
         #should be except DoesNotExist, find where to import that from
         except:
