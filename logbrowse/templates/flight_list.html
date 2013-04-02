@@ -103,35 +103,130 @@ var MERCATOR = new OpenLayers.Projection('EPSG:900913');
 var size = new OpenLayers.Size(21, 25);
 var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
 var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
+var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
 function initMap() {
 
 
     flightMap = new OpenLayers.Map('allFlightsMap',{projection: MERCATOR});
     flightMap.addControl(new OpenLayers.Control.LayerSwitcher());
     flightMap.addControl(new OpenLayers.Control.ScaleLine());
-    var flightStartLocsJSON = {
-        "type": "FeatureCollection", 
-        "features": [
-        {
-            "type": "Feature", 
-            "geometry":
-                {
-                    "type": "MultiPoint", 
-                    "coordinates": {{flightStartLocs}}
-                }, 
-            
-        },]
-    };
+    var flightStartLocsJSON = {{flightStartLocs|safe}}
     var geojson_format = new OpenLayers.Format.GeoJSON({
                     'internalProjection': MERCATOR,
                     'externalProjection': WGS84
                 });
-    vector_layer = new OpenLayers.Layer.Vector("Flights");
+    vector_layer = new OpenLayers.Layer.Vector("Flights",{
+                styleMap: new OpenLayers.StyleMap({
+                    "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+                        graphicOpacity:1,
+                        fontSize: "15px",
+                        fontColor:"#00FF00",
+                        fontWeight:"bold",
+                        fill:false
+                        }
+                    , OpenLayers.Feature.Vector.style["default"])),
+                    "selected": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+                        label : "${name}",
+                        labelAlign:"lb",
+                        graphicOpacity:1,
+                        fontColor:"#000000", 
+                        fontWeight:"bold",                        
+                        fill: true}
+                        , OpenLayers.Feature.Vector.style["highlight"])),
+                    "clicked": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+                        label : "Opening in new window",
+                        fontSize: "15px",
+                        fontColor:"#000000",
+                        fontWeight:"bold",                        
+                        fill: true}
+                        , OpenLayers.Feature.Vector.style["select"]))
+                })})
     flightStartLocs=geojson_format.read(flightStartLocsJSON);
-    osm_layer=new OpenLayers.Layer.OSM();
+    // Bing's Road imagerySet
+    var broad = new OpenLayers.Layer.Bing({
+        key: apiKey,
+        type: "Road"
+    });
+    // Bing's Aerial imagerySet
+    var baerial = new OpenLayers.Layer.Bing({
+        key: apiKey,
+        type: "Aerial"
+    });
+    // Bing's AerialWithLabels imagerySet
+    var bhybrid = new OpenLayers.Layer.Bing({
+        key: apiKey,
+        type: "AerialWithLabels",
+        name: "Bing Aerial With Labels",
+        // Ugly custom resolutions are for allowing client zoom. May be a better way.
+        resolutions: [156543.03390625, 78271.516953125, 39135.7584765625,
+                      19567.87923828125, 9783.939619140625, 4891.9698095703125,
+                      2445.9849047851562, 1222.9924523925781, 611.4962261962891,
+                      305.74811309814453, 152.87405654907226, 76.43702827453613,
+                      38.218514137268066, 19.109257068634033, 9.554628534317017,
+                      4.777314267158508, 2.388657133579254, 1.194328566789627,
+                      0.5971642833948135, 0.25, 0.1, 0.05],
+        serverResolutions: [156543.03390625, 78271.516953125, 39135.7584765625,
+                            19567.87923828125, 9783.939619140625,
+                            4891.9698095703125, 2445.9849047851562,
+                            1222.9924523925781, 611.4962261962891,
+                            305.74811309814453, 152.87405654907226,
+                            76.43702827453613, 38.218514137268066,
+                            19.109257068634033, 9.554628534317017,
+                            4.777314267158508, 2.388657133579254,
+                            1.194328566789627, 0.5971642833948135],
+        transitionEffect: 'resize'
+    });
     vector_layer.addFeatures(flightStartLocs);
-    flightMap.addLayers([osm_layer, vector_layer]);
+    flightMap.addLayers([bhybrid, vector_layer]);
     flightMap.zoomToExtent(vector_layer.getDataExtent());
+
+    // Adding hover and click events
+    highlightCtrl = new OpenLayers.Control.SelectFeature(vector_layer, {
+    hover: true,
+    highlightOnly: true,
+    renderIntent: "selected",
+    });
+
+    selectCtrl = new OpenLayers.Control.SelectFeature(
+        vector_layer,
+        {
+            hover: false,
+            clickout: true,
+            multiple: false
+        }
+    );
+    flightMap.addControl(highlightCtrl);
+    highlightCtrl.activate();
+    flightMap.addControl(selectCtrl);
+    selectCtrl.activate();
+    
+    function flightSelected(evt){
+        //window.open(evt.feature.attributes.slug,"Window1");
+        //selectCtrl.unselectAll();
+        // would be nice to use the highlightFlightInTable function here, but it takes the wrong kind of event...
+        selectOnWidgets(evt.feature.attributes.number)
+        return false;
+    }
+    vector_layer.events.register("featureselected", vector_layer, flightSelected);
+};
+    // Select all things that represent one log, given its ID
+    function selectOnWidgets(flightLogId){
+        unselectOnWidgets(flightLogId)
+        //table
+        flightsTableEntry=$("#flights-table>tbody>tr:contains(Log "+flightLogId+" )")
+        flightsTableEntry.scrollIntoView(100)        
+        flightsTableEntry.addClass('highlighted')  
+        //timeline
+        timeline.items[flightLogId].select()
+        //map
+        highlightCtrl.highlight(vector_layer.getFeaturesByAttribute("number",flightLogId))
+    }
+    // Unselect all things
+    function unselectOnWidgets(flightLogId){
+    //table
+    $("#flights-table>tbody>tr").removeClass('highlighted')
+    //timeline
+    //map
     };
 
         $(document).ready(function() {
@@ -140,8 +235,6 @@ function initMap() {
         $(".timeline-event").hover(highlightFlightInTable,unHighlightFlightInTable)
         $("#flights-table>tbody>tr").hover(highlightFlightOnTL,unHighlightFlightOnTL)
         
-        
-                
         }
 );    
     </script>

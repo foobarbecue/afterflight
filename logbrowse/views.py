@@ -71,6 +71,18 @@ def timegliderFormatFlights(request):
 def flightIndex(request):
     timelineEventList=[]
     flightStartLocs=[]
+    flightStartLocsJSON = {
+        "type": "FeatureCollection", 
+        "features": [
+        {
+            "type": "Feature", 
+            "geometry":
+                {
+                    "type": "MultiPoint", 
+                    "coordinates": flightStartLocs
+                },
+        },]
+    };
     for flight in Flight.objects.all():
         #optimize this later-- should be single db transaction
         try:
@@ -88,11 +100,23 @@ def flightIndex(request):
             latestGPSmsg=flight.mavmessage_set.filter(msgType="GLOBAL_POSITION_INT").latest()
             lat=latestGPSmsg.mavdatum_set.get(msgField='lat').value/1e7
             lon=latestGPSmsg.mavdatum_set.get(msgField='lon').value/1e7
-            flightStartLocs.append([lon,lat])
+            if lon != 0 and lat != 0: #TODO should actually check the GPS_STATUS messages to throw away points where there is no fix
+                flightStartLocsJSON['features'].append(
+                    {
+                    "type":"Feature",
+                    "geometry":{
+                            "type":"Point",
+                            "coordinates":[lon,lat]
+                        },
+                     "properties":{"number":flight.pk,"name":unicode(flight),"slug":flight.slug}
+                     })
+
+            
         #should be except DoesNotExist, find where to import that from
         except:
             pass
-            
+
+    
 
     for video in FlightVideo.objects.all():
         vidDescription="<a href=%s>" % video.url
@@ -113,5 +137,5 @@ def flightIndex(request):
         {
         'object_list':Flight.objects.all(),
         'timeline_data': simplejson.dumps(timelineEventList),
-        'flightStartLocs': flightStartLocs
+        'flightStartLocs': simplejson.dumps(flightStartLocsJSON)
         })
