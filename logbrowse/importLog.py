@@ -22,12 +22,55 @@ from django.conf import settings
 # allow import from where mavlink.py is
 sys.path.append(settings.PYMAVLINK_PATH)
 import mavutil
+import dflogs
 from logbrowse.models import Flight, MavMessage, MavDatum
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.template.defaultfilters import slugify
 
+
 def readInLog(filepath):
+    if filepath.endswith('.log'):
+        return readInDfLog(filepath)
+    elif filepath.endswith('.tlog'):
+        return readInTLog(filepath)
+    
+def readInDfLog(filepath,dataType='all',startTime=startTime, useGpsTime=True, frame='octa'):
+    df_GPS_fields=['time','sats','lat','lon','sensor_alt','gps_alt','ground_speed','ground_course']
+    df_RAW_fields=['gyro_x','gyro_y','gyro_z','accel_x','accel_y','accel_z']
+    newFlight, created=Flight.objects.get_or_create(logfile=filepath)
+    logFile=open(logFilePath,'r')
+    #should maybe rewrite this using a class for each row type?
+    for logLine in logFile:
+        logLine=logLine.split(',')
+        if logLine[0]=='GPS':    
+            timestamp=datetime.timedelta(milliseconds=int(logLine[1]))+startTime
+            newMessage=MavMessage(msgType='df_GPS', timestamp=timestamp, flight=newFlight)
+            for x in range(len(df_GPS_fields)):
+                newDatum=MavDatum(msgField='df_%s' % df_GPS_fields[x],value=logLine[x+1],message=newMessage)
+            
+        elif logLine[0]=='MOT':
+            if timestamp: #We are using the timestamp from the GPS packet, because both happen at 10hz
+                newMessage=MavMessage(msgType='df_MOT', timestamp=timestamp, flight=newFlight)
+                for x in range(1,9): #hardcoded for octocopter, TODO generalize for n motors
+                    newDatum=MavDatum(msgField='motor %s' % x,value=logLine[x],message=newMessage)
+                    newDatum.save()
+                timestamp=None
+            else continue #we haven't had a gps timestamp yet
+            
+        elif logLine[0]=='RAW':
+            #Unlike the timestamped GPS messages, which happen at 10hz, RAW messages come in at 50hz
+            if timestamp50:
+                timestamp50=timestamp50+timedelta(milliseconds=20)
+            else:
+                timestamp50=timestamp #set it to the GPS timestamp. This is a few milliseconds wrong! TODO
+            newMessage=MavMessage(msgType='df_RAW', timestamp=timestamp50, flight=newFlight)
+            for x in range(len(df_RAW_fields)):
+                newDatum=MavDatum(msgField='%s' % df_RAW_fields[x],value=logLine[x],message=newMessage)
+    
+    return newFlight
+
+def readInTLog(filepath):
     mlog = mavutil.mavlink_connection(filepath)
     newFlight, created=Flight.objects.get_or_create(logfile=filepath)
     if created:
