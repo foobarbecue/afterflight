@@ -28,7 +28,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.template.defaultfilters import slugify
 
-
+@transaction.commit_on_success
 def readInLog(filepath):
     if filepath.endswith('.log'):
         return readInDfLog(filepath)

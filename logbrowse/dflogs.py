@@ -4,6 +4,12 @@ import pandas, cv, os, pdb, shutil
 logFilePath="/home/aaron/arducopter/binary/MissionPlanner/logs/2012-07-09 10-02 6.log"
 startTime=datetime.datetime(2012,07,9)
 logSampleLag={'MOTORS':datetime.timedelta(milliseconds=100)}
+#dfFormat is a dict of dataflash log parameters. Values are a list of fields and the logging frequency in milliseconds.
+dfFormat{'MOT':motlist=['MOT%s'%x for x in range(1,9)],
+         'RAW':['gyro_x','gyro_y','gyro_z','accel_x','accel_y','accel_z'],
+         'INAV':['baro_alt','inertial_nav_alt','baro_rate','inertial_nav_alt_rate','accel_corr_x','accel_corr_y','accel_corr_z','inav_accel_corr_z','gps_lat_diff','gps_lon_diff','inav_Lat','inav_lon','inav_lat_vel','inav_lon_vel'],
+         'ITERM':[],
+         'GPS':['time','sats','lat','lon','sensor_alt','gps_alt','ground_speed','ground_course']}
 
 def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime, useGpsTime=True, frame='octa'):
     """
@@ -34,7 +40,7 @@ def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime, 
     timestampIsCurrent=False
     for logLine in logFile:
         if dataType=='all':
-            if useGpsTime==True:
+            if useGpsTime:
                 if logLine.startswith('GPS'):
                     logLine=logLine.split(',')
                     logData['timestamp'].append(datetime.timedelta(milliseconds=int(logLine[1]))+startTime)
@@ -44,6 +50,16 @@ def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime, 
                         logData['motors_out']=vstack((logData['motors_out'],logLine.split(',')[1:]))
                         #Throw away data until we get another timestamp (might want to write linear interp in here)
                         timestampIsCurrent=False
+                elif logLine.startswith('GPS'):
+                    if timestampIsCurrent:
+                        logData['motors_out']=vstack((logData['motors_out'],logLine.split(',')[1:]))
+                        timestampIsCurrent=False
+                elif logLine.startswith('RAW'):
+                    if timestampIsCurrent:
+                        logData['motors_out']=vstack((logData['motors_out'],logLine.split(',')[1:]))
+                        timestampIsCurrent=False
+                
+
             else:
                 #We are not using GPS for timing
                 if logLine.startswith('MOT'):
@@ -53,6 +69,7 @@ def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime, 
                     else:
                         logData['timestamp'].append(logData['timestamp'][-1]+logSampleLag['MOTORS'])
                         logData['motors_out']=vstack((logData['motors_out'],logLine.split(',')[1:]))
+           
     logData=pandas.DataFrame(logData['motors_out'],index=logData['timestamp'][0:len(logData['motors_out'])],dtype='int32')
     return(logData)
 
