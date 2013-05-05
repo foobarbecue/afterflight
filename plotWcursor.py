@@ -1,11 +1,11 @@
 from pylab import *
 import pandas, cv, os, pdb, shutil
 
-logFilePath="/home/aaron/arducopter/logs/2012-07-09 10-02 6.log"
+logFilePath="/home/aaron/arducopter/binary/MissionPlanner/logs/2012-07-09 10-02 6.log"
 startTime=datetime.datetime(2012,07,9)
 logSampleLag={'MOTORS':datetime.timedelta(milliseconds=100)}
 
-def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime, useGpsTime=True):
+def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime, useGpsTime=True, frame='octa'):
     """
     Reads in a APM Mission Planner .log file, returning it as a pandas DataFrame
 
@@ -26,7 +26,10 @@ def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime, 
     collected, because the log data only contains GPS milliseconds since midnight
     GMT.
     """
-    logData={'timestamp':[],'motors_out':np.empty(dtype='int32', shape=(0,4))}
+    if frame=='quad':
+      logData={'timestamp':[],'motors_out':np.empty(dtype='int32', shape=(0,4))}
+    if frame=='octa':
+      logData={'timestamp':[],'motors_out':np.empty(dtype='int32', shape=(0,8))}
     logFile=open(logFilePath,'r')
     timestampIsCurrent=False
     for logLine in logFile:
