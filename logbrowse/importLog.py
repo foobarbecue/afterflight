@@ -17,12 +17,11 @@ Reads a .tlog using pymavlink into the afterflight database
 todo: get_or_creates should be checking MAV id
 '''
 import sys, os, re
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.conf import settings
 # allow import from where mavlink.py is
 sys.path.append(settings.PYMAVLINK_PATH)
 import mavutil
-import dflogs
 from logbrowse.models import Flight, MavMessage, MavDatum
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -35,36 +34,49 @@ def readInLog(filepath):
     elif filepath.endswith('.tlog'):
         return readInTLog(filepath)
     
-def readInDfLog(filepath,dataType='all',startTime=startTime, useGpsTime=True, frame='octa'):
+def readInDfLog(filepath, startdate):
     df_GPS_fields=['time','sats','lat','lon','sensor_alt','gps_alt','ground_speed','ground_course']
     df_RAW_fields=['gyro_x','gyro_y','gyro_z','accel_x','accel_y','accel_z']
+    timestamp50=None
+    timestamp=None
     newFlight, created=Flight.objects.get_or_create(logfile=filepath)
-    logFile=open(logFilePath,'r')
+    filename=re.match(r'.*/(.*)$',newFlight.logfile.name).groups()[0]
+    newFlight.slug=slugify(filename)
+    newFlight.save()
+    logFile=open(filepath,'r')
     #should maybe rewrite this using a class for each row type?
     for logLine in logFile:
         logLine=logLine.split(',')
         if logLine[0]=='GPS':    
-            timestamp=datetime.timedelta(milliseconds=int(logLine[1]))+startTime
+            timestamp=timedelta(milliseconds=int(logLine[1]))+startdate
             newMessage=MavMessage(msgType='df_GPS', timestamp=timestamp, flight=newFlight)
+            newMessage.save()
             for x in range(len(df_GPS_fields)):
-                newDatum=MavDatum(msgField='df_%s' % df_GPS_fields[x],value=logLine[x+1],message=newMessage)
+                #We need to multiply all values by 1e7 so they match the float-format GPS values from the .tlogs
+                newDatum=MavDatum(msgField='df_%s' % df_GPS_fields[x],value=float(logLine[x+1])*1e7,message=newMessage) #TODO silly hack. We divide by 1e7 later.
+                newDatum.save()
             
         elif logLine[0]=='MOT':
             if timestamp: #We are using the timestamp from the GPS packet, because both happen at 10hz
                 newMessage=MavMessage(msgType='df_MOT', timestamp=timestamp, flight=newFlight)
+                newMessage.save()
                 for x in range(1,9): #hardcoded for octocopter, TODO generalize for n motors
                     newDatum=MavDatum(msgField='motor %s' % x,value=logLine[x],message=newMessage)
                     newDatum.save()
                 timestamp=None
-            else continue #we haven't had a gps timestamp yet
+            else:
+                continue #we haven't had a gps timestamp yet
             
         elif logLine[0]=='RAW':
             #Unlike the timestamped GPS messages, which happen at 10hz, RAW messages come in at 50hz
             if timestamp50:
                 timestamp50=timestamp50+timedelta(milliseconds=20)
-            else:
-                timestamp50=timestamp #set it to the GPS timestamp. This is a few milliseconds wrong! TODO
+            elif timestamp: #set it to the GPS timestamp. This is a few milliseconds wrong! TODO
+                timestamp50=timestamp 
+            else: #no time data at all yet
+                continue
             newMessage=MavMessage(msgType='df_RAW', timestamp=timestamp50, flight=newFlight)
+            newMessage.save()
             for x in range(len(df_RAW_fields)):
                 newDatum=MavDatum(msgField='%s' % df_RAW_fields[x],value=logLine[x],message=newMessage)
     

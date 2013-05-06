@@ -5,7 +5,7 @@ logFilePath="/home/aaron/arducopter/binary/MissionPlanner/logs/2012-07-09 10-02 
 startTime=datetime.datetime(2012,07,9)
 logSampleLag={'MOTORS':datetime.timedelta(milliseconds=100)}
 #dfFormat is a dict of dataflash log parameters. Values are a list of fields and the logging frequency in milliseconds.
-dfFormat{'MOT':motlist=['MOT%s'%x for x in range(1,9)],
+dfFormat={'MOT':motlist=['MOT%s'%x for x in range(1,9)],
          'RAW':['gyro_x','gyro_y','gyro_z','accel_x','accel_y','accel_z'],
          'INAV':['baro_alt','inertial_nav_alt','baro_rate','inertial_nav_alt_rate','accel_corr_x','accel_corr_y','accel_corr_z','inav_accel_corr_z','gps_lat_diff','gps_lon_diff','inav_Lat','inav_lon','inav_lat_vel','inav_lon_vel'],
          'ITERM':[],

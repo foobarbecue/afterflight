@@ -53,6 +53,7 @@ gpsTimestamps={{object.gpsTimestamps|safe}}
 tlData = {{timeline_data|safe}}
 
 // Setup the sensor data plot
+try{
     min=plotData[0][0][0]
     max=plotData[0].slice(-1)[0][0]
     sensorPlot = $.jqplot('sensorPlot',  plotData, 
@@ -86,7 +87,10 @@ tlData = {{timeline_data|safe}}
             //Add icon to map for time hoveredDatum[0] (not implemented yet)
         }
     });
+}
 
+catch(e){
+}
 // Draw videos
     {% for video in object.flightvideo_set.all %}
 
