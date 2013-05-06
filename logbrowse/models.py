@@ -112,11 +112,11 @@ class Flight(models.Model):
         
     @property
     def messageTypesRecorded(self):
-        return MavDatum.objects.filter(message__flight=self).values_list('message__msgType',flat=True).distinct()
+        return MavDatum.objects.filter(message__flight=self).values_list('message__msgType',flat=True).order_by('message__msgType').distinct()
     
     @property
     def messageFieldsRecorded(self):
-        return MavDatum.objects.filter(message__flight=self).values('msgField').distinct()
+        return MavDatum.objects.filter(message__flight=self).values('msgField').order_by('msgField').distinct()
     
     @property
     def length(self):

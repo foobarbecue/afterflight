@@ -19,6 +19,7 @@
 <link type="text/css" href="/media/js/openlayers/theme/default/scalebar-thin.css" rel="stylesheet">
 <link rel="stylesheet" type="text/css" href="/media/js/openlayers/theme/default/style.css">
 <link rel="stylesheet" type="text/css" href="/media/js/jqplot/jquery.jqplot.css" />
+<link rel="stylesheet" type="text/css" href="/media/css/jquery-ui.css" />
 <link rel="stylesheet" type="text/css" href="/media/css/flightDetail.css">
 <!-- FIXTHIS: host the css locally -->
 <link rel="stylesheet" type="text/css" href="/media/css/timeline.css">
@@ -29,6 +30,7 @@
 <script src="/media/js/jqplot/plugins/jqplot.cursor.min.js"></script>
 <script src="/media/js/openlayers/OpenLayers.js"></script>
 <script type="text/javascript" src="/media/js/timeline.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
 <script src="/media/js/openlayers/lib/Control/ScaleBar.js"></script>
 {%if object.flightvideo_set.all %}
 <script src="/media/js/swfobject.js"></script>
@@ -179,8 +181,12 @@ function drawTimeline() {
     };
     timeline = new links.Timeline(document.getElementById('timeline'))
     timeline.draw(tlData, options)
-    timeline.setCustomTime(min)
-    
+    try{
+        timeline.setCustomTime(min)
+    }
+    catch(e){
+        alert('Problem seeking timeline to beginning of plot data')
+    }
     //Register an event to seek all widgets when the customtime bar is dragged
     links.events.addListener(timeline, 'timechange', onTimelineBarDragged)
 };
@@ -266,7 +272,7 @@ onPlayer{{video.id}}StateChange = function (newstate) {
 }
 
 {% endfor %}
-
+$("#detailsContainer").tabs() // activate jquery ui tabs
 }); // end of jquery document.ready function
 
 function onYouTubePlayerReady(playerId) {
@@ -291,16 +297,36 @@ function addVideoToTimeline() {
 </head>
 <body>
 <div id="detailsContainer">
-    <h1>Flight details</h1>
-    {{object}}
-    Mavlink messages by type
-    <ul>
-    {% for messageType in object.countMessagesByType %}
-    <li>{{messageType.0}}: {{messageType.1}}</li>
-    {% endfor %}
-    </ul>
-    Total mavlink messages: {{object.mavmessage_set.count}}
 
+<ul>
+<li><a href="#detailsContainer-1">Flight notes</a></li>
+<li><a href="#detailsContainer-2">Log summary</a></li>
+<li><a href="#detailsContainer-3">Parameters</a></li>
+</ul>
+<div class="tabs-background ui-widget-header"><h1>Flight details</h1></div>
+<div id="detailsContainer-1">
+    <table>
+    <tr><td>Logfile:</td> <td>{{object.logfile}}</td>
+    <tr><td>Notes:</td> <td>{{object.comments}}</td>
+    <tr><td>Airframe:</td> <td>{{object.airframe}}</td>
+    <tr><td>Battery:</td> <td>{{object.battery}}</td>
+    <tr><td>Payload:</td> <td>{{object.payload}}</td>
+    </table>
+    
+</div>
+<div id="detailsContainer-2">
+        Total log messages: {{object.mavmessage_set.count}}
+        <table>
+        {% for messageType in object.countMessagesByType %}
+        <tr><td>{{messageType.0}}:</td><td> {{messageType.1}}</td></tr>
+        {% endfor %}
+        </table>
+    
+</div>
+<div id="detailsContainer-3">
+    Not implemented yet.
+    
+</div>
 </div>
 <div id="videoContainer">
     <h1>Video</h1>
@@ -312,7 +338,7 @@ function addVideoToTimeline() {
 </div>
 <div id="plotContainer">
     <h1>Sensor data</h1>
-        <div id="sensorPlot" style="width:600px;height:300px"></div>    
+        <div id="sensorPlot" style="width:600px;height:300px"></div>
 </div>
 <div id="mapContainer">
     <h1>Map</h1>
