@@ -44,7 +44,7 @@ var size = new OpenLayers.Size(21, 25);
 var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
 var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
 var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
-
+var addDataToPlot
 
 $(document).ready(function(){
 
@@ -273,6 +273,20 @@ onPlayer{{video.id}}StateChange = function (newstate) {
 
 {% endfor %}
 $("#detailsContainer").tabs() // activate jquery ui tabs
+//$("#plotContainer").tabs() 
+addDataToPlot = function() {
+    $.ajax({
+        type:"GET",
+        url:'http://volcanocopter.com:8000/data',
+        data:$('#sensorPlotDataForm').serialize(),
+        }).done(function (data) {
+            sensorPlot.replot({data:data})
+            data=data
+            })
+    return false
+}
+
+$('#sensorPlotDataForm').submit(addDataToPlot)
 }); // end of jquery document.ready function
 
 function onYouTubePlayerReady(playerId) {
@@ -292,6 +306,9 @@ function addVideoToTimeline() {
     {% endif %}
 }
 
+
+
+
 </script>
 
 </head>
@@ -302,6 +319,7 @@ function addVideoToTimeline() {
 <li><a href="#detailsContainer-1">Flight notes</a></li>
 <li><a href="#detailsContainer-2">Log summary</a></li>
 <li><a href="#detailsContainer-3">Parameters</a></li>
+<li><a href="#detailsContainer-4">Flight analysis</a></li>
 </ul>
 <div class="tabs-background ui-widget-header"><h1>Flight details</h1></div>
 <div id="detailsContainer-1">
@@ -327,6 +345,10 @@ function addVideoToTimeline() {
     Not implemented yet.
     
 </div>
+<div id="detailsContainer-4">
+    Not implemented yet.
+    
+</div>
 </div>
 <div id="videoContainer">
     <h1>Video</h1>
@@ -339,6 +361,22 @@ function addVideoToTimeline() {
 <div id="plotContainer">
     <h1>Sensor data</h1>
         <div id="sensorPlot" style="width:600px;height:300px"></div>
+        <form id="sensorPlotDataForm">
+            Left y axis:
+            <select name="left_axis">
+                {% for msg_field in object.messageFieldsRecorded %}
+                    <option value="{{msg_field.msgField}}">{{msg_field.msgField}}</a>
+                {% endfor %}
+            </select>
+            Right y axis:
+            <select name="right_axis">
+                {% for msg_field in object.messageFieldsRecorded %}
+                    <option value="{{msg_field.msgField}}">{{msg_field.msgField}}</a>
+                {% endfor %}
+            </select>
+            <input type="hidden" name="flight" value="{{object}}" />
+            <input type="submit" value="Update plot"></input>
+        </form>
 </div>
 <div id="mapContainer">
     <h1>Map</h1>

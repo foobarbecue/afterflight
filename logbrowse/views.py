@@ -15,7 +15,8 @@
 from django.utils import simplejson
 from models import Flight, FlightVideo, MavDatum
 from django.shortcuts import render_to_response
-import calendar, datetime
+from django.http import HttpResponse
+import calendar, datetime, json
 from utils import dt2jsts
 # Create your views here.
 def flightDetail(request, slug):
@@ -51,6 +52,22 @@ def flightDetail(request, slug):
         'timeline_data':simplejson.dumps(timelineEventList),
         'object':flight})
 
+def plotDataJSON(request):
+    right_axis_msgfield=request.GET.get('right_axis')
+    left_axis_msgfield=request.GET.get('left_axis')
+    flight=request.GET.get('flight')
+    
+    rdataQuery=MavDatum.objects.filter(message__flight__slug=flight, msgField=right_axis_msgfield)
+    right_axis_data=rdataQuery.values_list('message__timestamp','value')
+    
+    ldataQuery=MavDatum.objects.filter(message__flight__slug=flight, msgField=left_axis_msgfield)
+    left_axis_data=ldataQuery.values_list('message__timestamp','value')
+    
+    right_axis_data= '['+','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in right_axis_data])+']'
+    left_axis_data= '['+','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in left_axis_data])+']'
+    data='[%s,%s]' % (right_axis_data,left_axis_data)
+    return HttpResponse(data, content_type='application/json')
+        
 def timegliderFormatFlights(request):
     flightList=[]
     for flight in Flight.objects.all():
