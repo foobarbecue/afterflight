@@ -68,7 +68,26 @@ class Flight(models.Model):
 
     def battVltsDataFlot(self):
         return ','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in self.battVltsData()])
-
+    
+    def sensor_plot_data(self, msg_field):
+        dataQ=MavDatum.objects.filter(message__flight=self, msgField=msg_field)
+        vals=dataQ.values_list('message__timestamp','value')
+        return ','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in vals])
+    
+    @property
+    def is_tlog(self):
+        return 'tlog' in self.slug
+    
+    def initial_plot(self):
+        #first we try to plot 
+        if self.is_tlog:
+            return {"labels":['Battery voltage (mv)','Throttle (pwm)'],
+                    "data":"[[%s],[%s]]"%(self.battVltsDataFlot(),self.thrDataFlot())}
+        else:
+            #probably because it is a dataflash log, not a tlog
+            return {"labels":['Motor 1 pwm out','Motor 2 pwm out'],
+                    "data":"[[%s],[%s]]"%(self.sensor_plot_data('Mot 1'),self.sensor_plot_data('Mot 2'))}
+    
     def lats(self):
         # The 'order_by' should be unnecessary, since it's already in the model's Meta, but seems only to work this way. *might be fixed now TODO
         lats=MavDatum.objects.filter(message__flight=self, msgField__in=['lat','df_lat'], message__msgType__in=['GLOBAL_POSITION_INT','df_GPS']).order_by('message__timestamp')
@@ -196,12 +215,20 @@ class Battery(models.Model):
     currentRating=models.IntegerField(blank=True, null=True)
     mfgSerNum=models.CharField(blank=True, null=True,max_length=40)
     persSerNum=models.CharField(max_length=40, primary_key=True)
+    mass=models.IntegerField(blank=True, null=True,max_length=40)
+    mfg=models.CharField(blank=True, null=True,max_length=40)
+    
+    def __unicode__(self):
+        return '%s (%ss %sc)' % (self.persSerNum, self.cells, self.capacity)
 
 class Airframe(models.Model):
     mfg=models.CharField(blank=True, null=True, max_length=40)
     partModel=models.CharField(blank=True, null=True, max_length=40)
     mfgSerNum=models.CharField(blank=True, null=True,max_length=40)
     persSerNum=models.CharField(max_length=40)
+    
+    def __unicode__(self):
+        return self.mfg + ' ' + self.partModel
 
 class FlightEvent(models.Model):
     EVENT_TYPES=(

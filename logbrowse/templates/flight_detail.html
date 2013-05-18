@@ -50,20 +50,22 @@ $(document).ready(function(){
 
 // Pull all initial data from the DB
 latLonsJSON={{object.latLonsJSON}}
-plotData=[[{{object.battVltsDataFlot}}],[{{object.thrDataFlot}}]];
+//initialPlotData=[[{{object.battVltsDataFlot}}],[{{object.thrDataFlot}}]];
+initialPlotData={{initial_plot.data|safe}}
+initialPlotLabels={{initial_plot.labels|safe}}
 gpsTimestamps={{object.gpsTimestamps|safe}}
 tlData = {{timeline_data|safe}}
 
 // Setup the sensor data plot
 try{
-    min=plotData[0][0][0]
-    max=plotData[0].slice(-1)[0][0]
-    sensorPlot = $.jqplot('sensorPlot',  plotData, 
+    min=initialPlotData[0][0][0]
+    max=initialPlotData[0].slice(-1)[0][0]
+    sensorPlot = $.jqplot('sensorPlot',  initialPlotData, 
         {
             title:'{{object}}',
             axes:{xaxis:{renderer:$.jqplot.DateAxisRenderer,tickInterval:60},
-                yaxis:{label:'Battery voltage, mV'},
-                y2axis:{label:'Throttle PWM value'}},
+                yaxis:{label:initialPlotLabels[0]},
+                y2axis:{label:initialPlotLabels[1]}},
             series:[{showMarker:false},{showMarker:false,yaxis:'y2axis'}],
             zoom: true,
             cursor: {
@@ -84,7 +86,7 @@ try{
     // Workaround for bug described at https://bitbucket.org/cleonello/jqplot/issue/633/jqplotdatahighlight-does-not-work-for-line
     sensorPlot.series[0].highlightMouseOver = true;
 
-    $("#sensorPlot").bind("jqplotDataMouseOver", function(event, srsInd, ptInd, hoveredDatum){
+    $("#sensorPlot").bind("jqinitialPlotDataMouseOver", function(event, srsInd, ptInd, hoveredDatum){
         if(hoveredDatum){
             //Add icon to map for time hoveredDatum[0] (not implemented yet)
         }
@@ -92,6 +94,7 @@ try{
 }
 
 catch(e){
+    alert('Could not draw plot.')
 }
 // Draw videos
     {% for video in object.flightvideo_set.all %}
@@ -325,10 +328,10 @@ function addVideoToTimeline() {
 <div id="detailsContainer-1">
     <table>
     <tr><td>Logfile:</td> <td>{{object.logfile}}</td>
-    <tr><td>Notes:</td> <td>{{object.comments}}</td>
-    <tr><td>Airframe:</td> <td>{{object.airframe}}</td>
-    <tr><td>Battery:</td> <td>{{object.battery}}</td>
-    <tr><td>Payload:</td> <td>{{object.payload}}</td>
+    <tr><td>Notes:</td> <td>{{object.comments|default:"Not specified"}}</td>
+    <tr><td>Airframe:</td> <td>{{ object.airframe|default:"Not specified"}}</td>
+    <tr><td>Battery:</td> <td>{{object.battery|default:"Not specified"}}</td>
+    <tr><td>Payload:</td> <td>{{object.payload|default:"Not specified"}}</td>
     </table>
     
 </div>

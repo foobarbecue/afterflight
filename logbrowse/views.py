@@ -50,6 +50,7 @@ def flightDetail(request, slug):
 
     return render_to_response('flight_detail.html',{
         'timeline_data':simplejson.dumps(timelineEventList),
+        'initial_plot':flight.initial_plot(),
         'object':flight})
 
 def plotDataJSON(request):

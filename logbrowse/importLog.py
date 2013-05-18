@@ -22,6 +22,7 @@ from django.conf import settings
 # allow import from where mavlink.py is
 sys.path.append(settings.PYMAVLINK_PATH)
 import mavutil
+import xml.etree.ElementTree as et
 from logbrowse.models import Flight, MavMessage, MavDatum
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -34,52 +35,72 @@ def readInLog(filepath):
     elif filepath.endswith('.tlog'):
         return readInTLog(filepath)
     
-def readInDfLog(filepath, startdate):
-    df_GPS_fields=['time','sats','lat','lon','sensor_alt','gps_alt','ground_speed','ground_course']
-    df_RAW_fields=['gyro_x','gyro_y','gyro_z','accel_x','accel_y','accel_z']
-    timestamp50=None
-    timestamp=None
+def readInDfLog(filepath, startdate, xml_format_file='dataflashlog.xml'):
+    
+    #Read in the dataflash log format and put it in a dictionary df_msg_types
+    with open(xml_format_file,'r') as df_log_format_file:    
+        df_log_xml=et.parse(df_log_format_file).getroot()
+        APM=df_log_xml.find('APM')
+        AC2=df_log_xml.find('AC2')
+    df_msg_types={}
+    for field_type in (AC2.getchildren()+APM.getchildren()):
+        df_msg_types[field_type.tag]=[dtype.text for dtype in field_type.getchildren()]
+    
+    #create a dictionary to keep track of last timestamp for each message field, and the lags
+    #format {'PM':{'lag':datetime.timedelta, 'curtime':datetime.datetime}}
+    time_dict={}
+    #setup lags
+    for df_msg_type in df_msg_types.keys():
+        time_dict[df_msg_type]={'lag':timedelta(milliseconds=100),'cur_timestamp':None}
+        #Unlike the timestamped GPS messages, which happen at 10hz, RAW messages come in at 50hz
+    time_dict['RAW']['lag']=timedelta(milliseconds=20)
+    
     newFlight, created=Flight.objects.get_or_create(logfile=filepath)
     filename=re.match(r'.*/(.*)$',newFlight.logfile.name).groups()[0]
     newFlight.slug=slugify(filename)
     newFlight.save()
     logFile=open(filepath,'r')
-    #should maybe rewrite this using a class for each row type?
-    for logLine in logFile:
-        logLine=logLine.split(',')
-        if logLine[0]=='GPS':    
-            timestamp=timedelta(milliseconds=int(logLine[1]))+startdate
-            newMessage=MavMessage(msgType='df_GPS', timestamp=timestamp, flight=newFlight)
-            newMessage.save()
-            for x in range(len(df_GPS_fields)):
-                #We need to multiply all values by 1e7 so they match the float-format GPS values from the .tlogs
-                newDatum=MavDatum(msgField='df_%s' % df_GPS_fields[x],value=float(logLine[x+1])*1e7,message=newMessage) #TODO silly hack. We divide by 1e7 later.
-                newDatum.save()
-            
-        elif logLine[0]=='MOT':
-            if timestamp: #We are using the timestamp from the GPS packet, because both happen at 10hz
-                newMessage=MavMessage(msgType='df_MOT', timestamp=timestamp, flight=newFlight)
-                newMessage.save()
-                for x in range(1,9): #hardcoded for octocopter, TODO generalize for n motors
-                    newDatum=MavDatum(msgField='motor %s' % x,value=logLine[x],message=newMessage)
-                    newDatum.save()
-                timestamp=None
-            else:
-                continue #we haven't had a gps timestamp yet
-            
-        elif logLine[0]=='RAW':
-            #Unlike the timestamped GPS messages, which happen at 10hz, RAW messages come in at 50hz
-            if timestamp50:
-                timestamp50=timestamp50+timedelta(milliseconds=20)
-            elif timestamp: #set it to the GPS timestamp. This is a few milliseconds wrong! TODO
-                timestamp50=timestamp 
-            else: #no time data at all yet
-                continue
-            newMessage=MavMessage(msgType='df_RAW', timestamp=timestamp50, flight=newFlight)
-            newMessage.save()
-            for x in range(len(df_RAW_fields)):
-                newDatum=MavDatum(msgField='%s' % df_RAW_fields[x],value=logLine[x],message=newMessage)
+    prev_timestamp={}
     
+    #throw away data until we have a timestamp
+    for log_line in logFile:
+        if log_line.startswith('GPS'):
+            break
+        else:
+            continue
+    #set all of the cur_timestamps to the first GPS point TODO we are throwing this point away right now
+    log_line=log_line.split(',')
+    cur_timestamp=timedelta(milliseconds=int(log_line[1]))+startdate
+    for df_msg_type in time_dict:
+        time_dict[df_msg_type]['cur_timestamp']=cur_timestamp
+    
+    for log_line in logFile:
+        log_line=log_line.split(',')
+        df_msg_type=log_line[0]
+        if df_msg_type not in df_msg_types:
+            print '%s not a known message type, skipping.'%df_msg_type
+            continue
+        #update the time
+        cur_time=time_dict[df_msg_type]['cur_timestamp']+time_dict[df_msg_type]['lag']
+        time_dict[df_msg_type]['cur_timestamp']=cur_time
+        
+        #Create a MavMessage for the row
+        new_message=MavMessage(msgType=df_msg_type, timestamp=time_dict[log_line[0]]['cur_timestamp'], flight=newFlight)
+        new_message.save()
+
+        #Create MavDatums for each cell
+        for x in range(len(log_line)-1):
+            if df_msg_type=='GPS':
+                #We need to multiply the lat and lon by 1e7 so they match the float-format GPS values from the .tlogs
+                log_line[2]=float(log_line[2])*1e7
+                log_line[3]=float(log_line[3])*1e7
+            #check for log lines that are longer than they are supposed to be acc to the schema
+            if x>(len(df_msg_types[df_msg_type])-1):
+                #print "Extra value in %s" % log_line
+                continue
+            new_datum=MavDatum(msgField=df_msg_types[df_msg_type][x],value=log_line[x+1],message=new_message)
+            new_datum.save()
+        
     return newFlight
 
 def readInTLog(filepath):
