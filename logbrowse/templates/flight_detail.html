@@ -21,7 +21,7 @@
 <link rel="stylesheet" type="text/css" href="/media/js/jqplot/jquery.jqplot.css" />
 <link rel="stylesheet" type="text/css" href="/media/css/jquery-ui.css" />
 <link rel="stylesheet" type="text/css" href="/media/css/flightDetail.css">
-<!-- FIXTHIS: host the css locally -->
+<link rel="stylesheet" type="text/css" href="/media/css/common.css">
 <link rel="stylesheet" type="text/css" href="/media/css/timeline.css">
 <script src="/media/js/jquery.min.js"></script>
 <script src="/media/js/jqplot/jquery.jqplot.min.js"></script>
@@ -98,6 +98,11 @@ try{
 catch(e){
     alert('Could not draw plot.')
 }
+
+//Set the dropdown boxes for plot variables to the ones we load initially
+$('select[name="left_axis"] option[value="'+ initialPlotLabels[0] +'"]').prop('selected',true)
+$('select[name="right_axis"] option[value="'+ initialPlotLabels[1] +'"]').prop('selected',true)
+
 // Draw videos
     {% for video in object.flightvideo_set.all %}
 
@@ -318,7 +323,11 @@ function addVideoToTimeline() {
 
 </head>
 <body>
-<div id="header">Afterflight UAV log analyzer</div>
+<div id="header">
+<h1>Afterflight: UAV log analysis suite</h1>
+<p class="nav-status">Viewing flight "{{object}}"</p>
+<div class='acct-links'>Home | Login | Register | About</div>
+</div>
 
 <div id="detailsContainer">
 
@@ -328,7 +337,7 @@ function addVideoToTimeline() {
 <li><a href="#detailsContainer-3">Parameters</a></li>
 <li><a href="#detailsContainer-4">Flight analysis</a></li>
 </ul>
-<div class="tabs-background ui-widget-header"><h1>Flight details</h1></div>
+<div class="tabs-background ui-widget-header"><h2>Flight details</h2></div>
 <div id="detailsContainer-1">
     <table>
     <tr><td>Logfile:</td> <td>{{object.logfile}}</td>
@@ -358,7 +367,7 @@ function addVideoToTimeline() {
 </div>
 </div>
 <div id="videoContainer">
-    <h1>Video</h1>
+    <h2>Video</h2>
     
     {% for video in object.flightvideo_set.all %}
         <div id="vidPlayer{{video.id}}"></div>
@@ -366,31 +375,32 @@ function addVideoToTimeline() {
     
 </div>
 <div id="plotContainer">
-    <h1>Sensor data</h1>
-        <div id="sensorPlot" style="width:600px;height:300px"></div>
+    <h2>Sensor data</h2>
+        <div id="sensorPlot"></div>
         <form id="sensorPlotDataForm">
-            Left y axis:
+            <p>Left y axis:
             <select name="left_axis">
                 {% for msg_field in object.messageFieldsRecorded %}
                     <option value="{{msg_field.msgField}}">{{msg_field.msgField}}</a>
                 {% endfor %}
-            </select>
-            Right y axis:
+            </select></p>
+            <p>Right y axis:
             <select name="right_axis">
                 {% for msg_field in object.messageFieldsRecorded %}
                     <option value="{{msg_field.msgField}}">{{msg_field.msgField}}</a>
                 {% endfor %}
-            </select>
+            </select></p>
             <input type="hidden" name="flight" value="{{object}}" />
             <input type="submit" value="Update plot"></input>
         </form>
         <button onclick="sensorPlot.resetZoom()">Reset zoom</button>
 </div>
 <div id="mapContainer">
-    <h1>Map</h1>
+    <h2>Map</h2>
     <div id="map"></div>
 </div>
 <div id="timelineContainer">
+    <h2>Flight event timeline</h2>
     <div id="timeline">Timeline loading...</div>
 </div>
 

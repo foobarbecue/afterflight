@@ -20,6 +20,7 @@
     <script type="text/javascript" src="/static/js/jquery.min.js"></script>
     <script type="text/javascript" src="/static/js/jquery.scrollIntoView.min.js"></script>        
     <link rel="stylesheet" type="text/css" href="/static/css/flightList.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/common.css">
     <script src="/media/js/openlayers/OpenLayers.js"></script>
     <script type="text/javascript" src="/media/js/timeline.js"></script>
     <link rel="stylesheet" type="text/css" href="/media/css/timeline.css">
@@ -28,28 +29,28 @@
 
 <body>
 
-
+<div id="header">
+<h1>Afterflight: UAV log analysis suite</h1>
+<p class="nav-status">Flight list</p>
+<div class='acct-links'>Home | Login | Register | About</div>
+</div>
 
 
 <div id="info">
-<h1>Flight data overview</h1>
 
 <table id="flights-table">
     <tr class="table-header">
         <th>Logfile</th>
+        <th>Start time</th>
         <th>Length</th>
         <th>Comments</th>
-    </tr>
-    <!-- To keep the table header floating above the table, we use position: fixed
-    in the css. Then we need this blank table row -->
-    <tr><td height="20px"></td></tr>
 
     {% for flight in object_list %}
         <tr>
             <td><a href=/flight/{{flight.slug}}>Log {{flight.id}} </a></td>
-            <td>{% if flight.length %}{{flight.length}}{% endif %}</td>
-            <td>{{flight.comments}}</td>
             <td>{{flight.gpsTimes.0}}</td>
+            <td>{% if flight.length %}{{flight.lengthStr}}{% endif %}</td>
+            <td>{{flight.comments|truncatewords:10}}</td>
         </tr>
     {% endfor %}
     </table>

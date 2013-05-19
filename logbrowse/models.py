@@ -92,13 +92,11 @@ class Flight(models.Model):
     
     def lats(self):
         # The 'order_by' should be unnecessary, since it's already in the model's Meta, but seems only to work this way. *might be fixed now TODO
-        lats=MavDatum.objects.filter(message__flight=self, msgField__in=['lat','df_lat'], message__msgType__in=['GLOBAL_POSITION_INT','df_GPS']).order_by('message__timestamp')
-            
-            
+        lats=MavDatum.objects.filter(message__flight=self, msgField__in=['lat','df_lat','Lat'], message__msgType__in=['GLOBAL_POSITION_INT','df_GPS']).order_by('message__timestamp')
         return scipy.array(lats.values_list('value', flat=True))/1e7
         
     def lons(self):
-        lons=MavDatum.objects.filter(message__flight=self, msgField__in=['lon','df_lon'], message__msgType__in=['GLOBAL_POSITION_INT','df_GPS']).order_by('message__timestamp')
+        lons=MavDatum.objects.filter(message__flight=self, msgField__in=['lon','df_lon','Long'], message__msgType__in=['GLOBAL_POSITION_INT','df_GPS']).order_by('message__timestamp')
         
         return scipy.array(lons.values_list('value', flat=True))/1e7
 
@@ -141,7 +139,10 @@ class Flight(models.Model):
     
     @property
     def length(self):
-        return self.endTime - self.startTime
+        return (self.endTime - self.startTime)
+    
+    def lengthStr(self):
+        return str(self.length)[:7]
     
     def countMessagesByType(self):
         msgTypeCounts=[None]*len(self.messageTypesRecorded)

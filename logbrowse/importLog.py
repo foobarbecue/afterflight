@@ -16,7 +16,7 @@
 Reads a .tlog using pymavlink into the afterflight database
 todo: get_or_creates should be checking MAV id
 '''
-import sys, os, re
+import sys, os, re, pdb
 from datetime import datetime, timedelta
 from django.conf import settings
 # allow import from where mavlink.py is
@@ -82,7 +82,6 @@ def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml'
         df_msg_type=log_line[0]
         if df_msg_type not in df_msg_types:
             if df_msg_type.startswith('MOD'):
-                print "mode message"
                 #Create a new event, using the latest GPS timestamp for the event timestamp
                 new_event=FlightEvent(timestamp=time_dict['GPS']['cur_timestamp'],eventType='MODE',comment=log_line[1],flight=newFlight,automatically_detected=True)
                 new_event.save()
@@ -92,22 +91,25 @@ def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml'
         #update the time
         cur_time=time_dict[df_msg_type]['cur_timestamp']+time_dict[df_msg_type]['lag']
         time_dict[df_msg_type]['cur_timestamp']=cur_time
+
+        if df_msg_type.startswith('GPS'):
+            #We need to multiply the lat and lon by 1e7 so they match the float-format GPS values from the .tlogs
+            log_line[3]=float(log_line[3])*1e7
+            log_line[4]=float(log_line[4])*1e7
         
         #Create a MavMessage for the row
-        new_message=MavMessage(msgType=df_msg_type, timestamp=time_dict[log_line[0]]['cur_timestamp'], flight=newFlight)
+        new_message=MavMessage(msgType='df_'+df_msg_type, timestamp=time_dict[log_line[0]]['cur_timestamp'], flight=newFlight)
         new_message.save()
 
         #Create MavDatums for each cell
         for x in range(len(log_line)-1):
-            if df_msg_type=='GPS':
-                #We need to multiply the lat and lon by 1e7 so they match the float-format GPS values from the .tlogs
-                log_line[2]=float(log_line[2])*1e7
-                log_line[3]=float(log_line[3])*1e7
             #check for log lines that are longer than they are supposed to be acc to the schema
             if x>(len(df_msg_types[df_msg_type])-1):
                 #print "Extra value in %s" % log_line
                 continue
             new_datum=MavDatum(msgField=df_msg_types[df_msg_type][x],value=log_line[x+1],message=new_message)
+            #if df_msg_type.startswith('GPS'):
+                #pdb.set_trace()
             new_datum.save()
         
     return newFlight
