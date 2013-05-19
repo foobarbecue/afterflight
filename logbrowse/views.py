@@ -20,9 +20,12 @@ import calendar, datetime, json
 from utils import dt2jsts
 # Create your views here.
 def flightDetail(request, slug):
+    print 'loading' + slug
     flight=Flight.objects.get(slug=slug)
     timelineEventList=[]
     heartbeats=flight.mavmessage_set.filter(msgType='HEARTBEAT')
+    
+    #Timeline data construction
     for heartbeat in heartbeats:
         try:
             timelineEventList.append(
@@ -41,7 +44,8 @@ def flightDetail(request, slug):
         timelineEventList.append(timelineDictForVid)
 
     for evt in flight.flightevent_set.all():
-        timelineDictForEvt={"start":dt2jsts(evt.timestamp), "content":evt.get_eventType_display()}
+        print evt
+        timelineDictForEvt={"start":dt2jsts(evt.timestamp), "content":evt.get_eventType_display() + evt.comment}
         if evt.automatically_detected:
             timelineDictForEvt['group']='Flight events'
         else:

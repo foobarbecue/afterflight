@@ -62,16 +62,18 @@ try{
     max=initialPlotData[0].slice(-1)[0][0]
     sensorPlot = $.jqplot('sensorPlot',  initialPlotData, 
         {
-            title:'{{object}}',
+            //title:'{{object}}',
             axes:{xaxis:{renderer:$.jqplot.DateAxisRenderer,tickInterval:60},
-                yaxis:{label:initialPlotLabels[0]},
-                y2axis:{label:initialPlotLabels[1]}},
+                //yaxis:{label:initialPlotLabels[0]},
+                //y2axis:{label:initialPlotLabels[1]}},
+                yaxis:{},
+                y2axis:{}},                
             series:[{showMarker:false},{showMarker:false,yaxis:'y2axis'}],
             zoom: true,
             cursor: {
                 show: true,
                 showVerticalLine: true,
-                zoom: true, 
+                zoom: true,
             },
             canvasOverlay: {
                 show:true,
@@ -316,6 +318,8 @@ function addVideoToTimeline() {
 
 </head>
 <body>
+<div id="header">Afterflight UAV log analyzer</div>
+
 <div id="detailsContainer">
 
 <ul>
@@ -380,6 +384,7 @@ function addVideoToTimeline() {
             <input type="hidden" name="flight" value="{{object}}" />
             <input type="submit" value="Update plot"></input>
         </form>
+        <button onclick="sensorPlot.resetZoom()">Reset zoom</button>
 </div>
 <div id="mapContainer">
     <h1>Map</h1>

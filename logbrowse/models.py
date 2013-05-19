@@ -85,8 +85,10 @@ class Flight(models.Model):
                     "data":"[[%s],[%s]]"%(self.battVltsDataFlot(),self.thrDataFlot())}
         else:
             #probably because it is a dataflash log, not a tlog
-            return {"labels":['Motor 1 pwm out','Motor 2 pwm out'],
-                    "data":"[[%s],[%s]]"%(self.sensor_plot_data('Mot 1'),self.sensor_plot_data('Mot 2'))}
+            right_yax='Mot 1'
+            left_yax='Mot 2'
+            return {"labels":[right_yax,left_yax],
+                    "data":"[[%s],[%s]]"%(self.sensor_plot_data(right_yax),self.sensor_plot_data(left_yax))}
     
     def lats(self):
         # The 'order_by' should be unnecessary, since it's already in the model's Meta, but seems only to work this way. *might be fixed now TODO
@@ -235,7 +237,8 @@ class FlightEvent(models.Model):
         ('TAKEOFF','Takeoff'),
         ('LANDING','Landing'),
         ('CRASH','Hard landing'),
-        ('FLIP','Flip')
+        ('FLIP','Flip'),
+        ('MODE','Mode change')
     )
     flight=models.ForeignKey(Flight)
     eventType=models.CharField(blank=True, null=True, max_length=40, choices=EVENT_TYPES)

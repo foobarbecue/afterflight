@@ -23,7 +23,7 @@ from django.conf import settings
 sys.path.append(settings.PYMAVLINK_PATH)
 import mavutil
 import xml.etree.ElementTree as et
-from logbrowse.models import Flight, MavMessage, MavDatum
+from logbrowse.models import Flight, MavMessage, MavDatum, FlightEvent
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.template.defaultfilters import slugify
@@ -36,7 +36,10 @@ def readInLog(filepath):
         return readInTLog(filepath)
     
 def readInDfLog(filepath, startdate, xml_format_file='dataflashlog.xml'):
-    
+    #TODO expand this to deal with the new self-describing log format
+    readInDfLogOldFormat(filepath=filepath, startdate=startdate, xml_format_file=xml_format_file)
+
+def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml'):
     #Read in the dataflash log format and put it in a dictionary df_msg_types
     with open(xml_format_file,'r') as df_log_format_file:    
         df_log_xml=et.parse(df_log_format_file).getroot()
@@ -78,7 +81,13 @@ def readInDfLog(filepath, startdate, xml_format_file='dataflashlog.xml'):
         log_line=log_line.split(',')
         df_msg_type=log_line[0]
         if df_msg_type not in df_msg_types:
-            print '%s not a known message type, skipping.'%df_msg_type
+            if df_msg_type.startswith('MOD'):
+                print "mode message"
+                #Create a new event, using the latest GPS timestamp for the event timestamp
+                new_event=FlightEvent(timestamp=time_dict['GPS']['cur_timestamp'],eventType='MODE',comment=log_line[1],flight=newFlight,automatically_detected=True)
+                new_event.save()
+            else:
+                print '%s not a known message type, skipping.'%df_msg_type
             continue
         #update the time
         cur_time=time_dict[df_msg_type]['cur_timestamp']+time_dict[df_msg_type]['lag']
