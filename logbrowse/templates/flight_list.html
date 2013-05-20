@@ -31,7 +31,7 @@
 
 <div id="header">
 <h1>Afterflight: UAV log analysis suite</h1>
-<p class="nav-status">Flight list</p>
+<p class="nav-status">Listing {{object_list.count}} flights</p>
 <div class='acct-links'>Home | Login | Register | About</div>
 </div>
 
@@ -58,9 +58,11 @@
 
 </div>
 
-<div id="allFlightsMap"></div>
+<div id="allFlightsMap"><h2>Map of all flights</h2></div>
 
-<div id="allFlightsTimeline"></div>
+<div id="allFlightsTimeline">
+<div id="timeline">Timeline loading...</div>
+</div>
 
     <script type="text/javascript">
         var timeline;
@@ -70,9 +72,11 @@
             data = {{timeline_data|safe}}
             var options = {
                 'editable': false,
-                'style': 'box'
+                'style': 'box',
+                'width':  '100%',
+                'height': '100%',
             };
-            timeline = new links.Timeline(document.getElementById('allFlightsTimeline'));
+            timeline = new links.Timeline(document.getElementById('timeline'));
             timeline.draw(data, options);
         };
         function highlightFlightInTable(event){

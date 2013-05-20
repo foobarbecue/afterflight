@@ -41,8 +41,6 @@ MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
 ('STATUSTEXT','STATUSTEXT'),
 ('GPS_STATUS','GPS_STATUS'))
 
-
-
 class Flight(models.Model):
     pilot=models.ForeignKey(User,blank=True, null=True)
     logfile=models.FileField(blank=True, null=True, upload_to='logs')
@@ -80,15 +78,19 @@ class Flight(models.Model):
     
     def initial_plot(self):
         #first we try to plot 
+        #right_yax='Mot 1'
+        #left_yax='Mot 2'
         if self.is_tlog:
-            return {"labels":['Battery voltage (mv)','Throttle (pwm)'],
-                    "data":"[[%s],[%s]]"%(self.battVltsDataFlot(),self.thrDataFlot())}
+            right_yax='throttle'
+            left_yax='servo3_raw'
+            #return {"labels":['Battery voltage (mv)','Throttle (pwm)'],
+                    #"data":"[[%s],[%s]]"%(self.battVltsDataFlot(),self.thrDataFlot())}
         else:
             #probably because it is a dataflash log, not a tlog
             right_yax='Mot 1'
             left_yax='Mot 2'
-            return {"labels":[right_yax,left_yax],
-                    "data":"[[%s],[%s]]"%(self.sensor_plot_data(right_yax),self.sensor_plot_data(left_yax))}
+        return {"labels":[right_yax,left_yax],
+                "data":"[[%s],[%s]]"%(self.sensor_plot_data(right_yax),self.sensor_plot_data(left_yax))}
     
     def lats(self):
         # The 'order_by' should be unnecessary, since it's already in the model's Meta, but seems only to work this way. *might be fixed now TODO
@@ -166,7 +168,7 @@ class Flight(models.Model):
         return reverse('flights', args=[self.slug])
     
     class Meta:
-        ordering = ['slug']
+        ordering = ['comments','slug']
 
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
