@@ -25,19 +25,23 @@ import mavutil
 import xml.etree.ElementTree as et
 from logbrowse.models import Flight, MavMessage, MavDatum, FlightEvent
 from django.contrib.auth.models import User
-from django.db import transaction
+from django.db import transaction, reset_queries
 from django.template.defaultfilters import slugify
 
 @transaction.commit_on_success
 def readInLog(filepath):
+    print "Importing " + filepath
     if filepath.endswith('.log'):
+        reset_queries()
         return readInDfLog(filepath)
     elif filepath.endswith('.tlog'):
+        reset_queries()
         return readInTLog(filepath)
     
-def readInDfLog(filepath, startdate, xml_format_file='dataflashlog.xml'):
+def readInDfLog(filepath, startdate=None):
     #TODO expand this to deal with the new self-describing log format
-    readInDfLogOldFormat(filepath=filepath, startdate=startdate, xml_format_file=xml_format_file)
+    startdate=datetime.strptime(filepath[:10],'%Y-%m-%d')
+    readInDfLogOldFormat(filepath=filepath, startdate=startdate, xml_format_file='dataflashlog.xml')
 
 def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml'):
     #Read in the dataflash log format and put it in a dictionary df_msg_types
@@ -85,8 +89,8 @@ def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml'
                 #Create a new event, using the latest GPS timestamp for the event timestamp
                 new_event=FlightEvent(timestamp=time_dict['GPS']['cur_timestamp'],eventType='MODE',comment=log_line[1],flight=newFlight,automatically_detected=True)
                 new_event.save()
-            else:
-                print '%s not a known message type, skipping.'%df_msg_type
+            #else:
+                #print '%s not a known message type, skipping.'%df_msg_type
             continue
         #update the time
         cur_time=time_dict[df_msg_type]['cur_timestamp']+time_dict[df_msg_type]['lag']
@@ -111,7 +115,6 @@ def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml'
             #if df_msg_type.startswith('GPS'):
                 #pdb.set_trace()
             new_datum.save()
-        
     return newFlight
 
 def readInTLog(filepath):
@@ -138,10 +141,11 @@ def readInTLog(filepath):
                         try:
                             value=float(item)
                         except ValueError:
-                            print "non-number value in %s" % m
+                            #print "non-number value in %s" % m
                             continue
                         newDatum=MavDatum(msgField=key,value=value,message=newMessage)
                         newDatum.save()
+            #end of logfile triggers an AttributeError. A more robust way of detecting this would be better. TODO
             except AttributeError:
                 newFlight.save()
                 return newFlight
