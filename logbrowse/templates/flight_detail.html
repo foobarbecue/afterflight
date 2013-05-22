@@ -44,7 +44,7 @@ var size = new OpenLayers.Size(21, 25);
 var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
 var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
 var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
-var addDataToPlot
+var addDataToPlot, addTimelineEvent
 
 $(document).ready(function(){
 
@@ -200,6 +200,18 @@ function drawTimeline() {
     //Register an event to seek all widgets when the customtime bar is dragged
     links.events.addListener(timeline, 'timechange', onTimelineBarDragged)
 };
+
+addTimelineEvent= function() {
+    var start = timeline.customTime;
+    var content = $("#annotationText").val();
+
+    timeline.addItem({
+        'start': start,
+        'content': content,
+        'group': 'annotations',
+    });
+};
+
 drawTimeline();
 
 // Widget control logic (mostly seeking)
@@ -381,13 +393,13 @@ function addVideoToTimeline() {
             <p>Left y axis:
             <select name="left_axis">
                 {% for msg_field in object.messageFieldsRecorded %}
-                    <option value="{{msg_field.msgField}}">{{msg_field.msgField}}</a>
+                    <option value="{{msg_field.msgField}}">{{msg_field}}</a>
                 {% endfor %}
             </select></p>
             <p>Right y axis:
             <select name="right_axis">
                 {% for msg_field in object.messageFieldsRecorded %}
-                    <option value="{{msg_field.msgField}}">{{msg_field.msgField}}</a>
+                    <option value="{{msg_field.msgField}}">{{msg_field}}</a>
                 {% endfor %}
             </select></p>
             <input type="hidden" name="flight" value="{{object}}" />
@@ -401,6 +413,10 @@ function addVideoToTimeline() {
 </div>
 <div id="timelineContainer">
     <h2>Flight event timeline</h2>
+    <form id="timelineController">
+        <input type="text" id="annotationText"></input>
+        <input type="submit" value="Add annotation"></submit>
+    </form>
     <div id="timeline">Timeline loading...</div>
 </div>
 

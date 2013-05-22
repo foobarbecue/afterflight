@@ -25,6 +25,14 @@
     <script type="text/javascript" src="/media/js/timeline.js"></script>
     <link rel="stylesheet" type="text/css" href="/media/css/timeline.css">
     <script src="/media/js/openlayers/lib/Control/ScaleBar.js"></script>
+    <script>
+    var WGS84 = new OpenLayers.Projection('EPSG:4326');
+var MERCATOR = new OpenLayers.Projection('EPSG:900913');
+var size = new OpenLayers.Size(21, 25);
+var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
+var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
+var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
+</script>
 </head>
 
 <body>
@@ -46,14 +54,13 @@
         <th>Comments</th>
 
     {% for flight in object_list %}
-        <tr>
-            <td><a href=/flight/{{flight.slug}}>Log {{flight.id}} </a></td>
-            <td>{{flight.gpsTimes.0}}</td>
+        <tr logpk=" {{flight.pk}} ">
+            <td><a href=/flight/{{flight.slug}}> {{flight.id}} </a></td>
+            <td>{{flight.startTime}}</td>
             <td>{% if flight.length %}{{flight.lengthStr}}{% endif %}</td>
             <td>{{flight.comments|truncatewords:10}}</td>
         </tr>
     {% endfor %}
-    </table>
 </table>
 
 </div>
@@ -61,6 +68,7 @@
 <div id="allFlightsMap"><h2>Map of all flights</h2></div>
 
 <div id="allFlightsTimeline">
+<h2>Timeline of all flights</h2>
 <div id="timeline">Timeline loading...</div>
 </div>
 
@@ -75,12 +83,14 @@
                 'style': 'box',
                 'width':  '100%',
                 'height': '100%',
+                'style': 'dot',
             };
             timeline = new links.Timeline(document.getElementById('timeline'));
             timeline.draw(data, options);
         };
         function highlightFlightInTable(event){
-            flightsTableEntry=$("#flights-table>tbody>tr:contains(Log "+event.target.textContent+" )")
+            $("#flights-table>tbody>tr").removeClass('highlighted')
+            flightsTableEntry=$("#flights-table>tbody>tr:contains(L"+event.target.textContent+" )")
             flightsTableEntry.addClass('highlighted')
             flightsTableEntry.scrollIntoView(100)
         };
@@ -88,7 +98,7 @@
             $("#flights-table>tbody>tr:contains(Log "+event.target.textContent+")").removeClass('highlighted')
         };
         function highlightFlightOnTL(event){
-            //FIXTHIS. Should be some more direct connection between flights on the table and in the timeline.
+            //TODO. Should be some more direct connection between flights on the table and in the timeline.
             //Maybe draw the table from the timeline using JS.
             //Also, should only create selectors once, and then re-use them.
             event.stopPropagation();
@@ -103,12 +113,6 @@
             return false;
         };
 // Draw map of flight path
-var WGS84 = new OpenLayers.Projection('EPSG:4326');
-var MERCATOR = new OpenLayers.Projection('EPSG:900913');
-var size = new OpenLayers.Size(21, 25);
-var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
-var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
-var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
 function initMap() {
 
 
@@ -131,7 +135,7 @@ function initMap() {
                         }
                     , OpenLayers.Feature.Vector.style["default"])),
                     "selected": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-                        label : "${name}",
+                        label : " ${number} ",
                         labelAlign:"lb",
                         graphicOpacity:1,
                         fontColor:"#000000", 
@@ -188,59 +192,76 @@ function initMap() {
     // Adding hover and click events
     highlightCtrl = new OpenLayers.Control.SelectFeature(vector_layer, {
     hover: true,
-    highlightOnly: true,
+    //highlightOnly: true,
     renderIntent: "selected",
     });
 
-    selectCtrl = new OpenLayers.Control.SelectFeature(
-        vector_layer,
-        {
-            hover: false,
-            clickout: true,
-            multiple: false
-        }
-    );
     flightMap.addControl(highlightCtrl);
     highlightCtrl.activate();
-    flightMap.addControl(selectCtrl);
-    selectCtrl.activate();
+    //flightMap.addControl(selectCtrl);
+    //selectCtrl.activate();
     
     function flightSelected(evt){
         //window.open(evt.feature.attributes.slug,"Window1");
         //selectCtrl.unselectAll();
         // would be nice to use the highlightFlightInTable function here, but it takes the wrong kind of event...
+        
+        
         selectOnWidgets(evt.feature.attributes.number)
+        
         return false;
     }
-    vector_layer.events.register("featureselected", vector_layer, flightSelected);
+    vector_layer.events.register("beforeselected", vector_layer, flightSelected);
 };
     // Select all things that represent one log, given its ID
-    function selectOnWidgets(flightLogId){
-        unselectOnWidgets(flightLogId)
+    function selectOnWidgets(logpk){
+    
+        $('.timeline-event:contains('+logpk+')').addClass('highlighted')
+        //map
+        //check that it's not already selected, to avoid infinite recursion
+        res=vector_layer.getFeaturesByAttribute("number",logpk)[0]
+        try{
+            if ($.inArray(res,vector_layer.selectedFeatures)==-1) {
+                highlightCtrl.unselectAll()
+                highlightCtrl.select(res)
+            }
+        }
+        catch(e){}
         //table
-        flightsTableEntry=$("#flights-table>tbody>tr:contains(Log "+flightLogId+" )")
+        flightsTableEntry=$('#flights-table>tbody>tr:contains('+logpk+')')
         flightsTableEntry.scrollIntoView(100)        
         flightsTableEntry.addClass('highlighted')  
         //timeline
-        timeline.items[flightLogId].select()
-        //map
-        highlightCtrl.highlight(vector_layer.getFeaturesByAttribute("number",flightLogId))
+        
     }
     // Unselect all things
-    function unselectOnWidgets(flightLogId){
+    function unselectOnWidgets(evt){
     //table
     $("#flights-table>tbody>tr").removeClass('highlighted')
+    $(".timeline-event").removeClass('highlighted')
     //timeline
     //map
+    
     };
-
-        $(document).ready(function() {
-        initMap();
-        drawTimeline();
-        $(".timeline-event").hover(highlightFlightInTable,unHighlightFlightInTable)
-        $("#flights-table>tbody>tr").hover(highlightFlightOnTL,unHighlightFlightOnTL)
-        
-        }
+    function timelineMouseOver(evt){
+        unselectOnWidgets(evt)
+        logpk=evt.target.textContent
+        selectOnWidgets(logpk)
+        return false
+    }
+    function tableMouseOver(evt){
+        unselectOnWidgets(evt)
+        logpk=$(this).attr('logpk')
+        selectOnWidgets(logpk)
+        return false
+    }
+    $(document).ready(function() {
+    initMap();
+    drawTimeline();
+    $(".timeline-event").hover(timelineMouseOver,unselectOnWidgets)
+    $("#flights-table tr").hover(tableMouseOver,unselectOnWidgets)
+    
+    }
 );    
     </script>
 </body>

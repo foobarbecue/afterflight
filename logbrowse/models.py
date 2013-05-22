@@ -46,6 +46,7 @@ class Flight(models.Model):
     logfile=models.FileField(blank=True, null=True, upload_to='logs')
     start=models.DateTimeField(blank=True, null=True)
     comments=models.TextField(blank=True, null=True)
+    #payload=models.TextField(blank=True, null=True)
     video=models.URLField(blank=True, null=True)
     battery=models.ForeignKey('Battery',blank=True, null=True, )
     airframe=models.ForeignKey('Airframe', blank=True, null=True)
@@ -85,10 +86,13 @@ class Flight(models.Model):
             left_yax='servo3_raw'
             #return {"labels":['Battery voltage (mv)','Throttle (pwm)'],
                     #"data":"[[%s],[%s]]"%(self.battVltsDataFlot(),self.thrDataFlot())}
-        else:
+        elif 'Mot 1' in self.messageFieldsRecorded:
             #probably because it is a dataflash log, not a tlog
             right_yax='Mot 1'
             left_yax='Mot 2'
+        elif 'roll_sensor' in self.messageFieldsRecorded:
+            right_yax='roll_sensor'
+            left_yax='pitch_sensor'
         return {"labels":[right_yax,left_yax],
                 "data":"[[%s],[%s]]"%(self.sensor_plot_data(right_yax),self.sensor_plot_data(left_yax))}
     
@@ -111,7 +115,7 @@ class Flight(models.Model):
     
     @property
     def gpsTimes(self):
-        return MavMessage.objects.filter(flight=self,msgType='GLOBAL_POSITION_INT').order_by('timestamp').values_list('timestamp',flat=True)
+        return MavMessage.objects.filter(flight=self,msgType__in=['GLOBAL_POSITION_INT','df_GPS']).order_by('timestamp').values_list('timestamp',flat=True)
     
     @property
     def startTime(self):
@@ -137,7 +141,7 @@ class Flight(models.Model):
     
     @property
     def messageFieldsRecorded(self):
-        return MavDatum.objects.filter(message__flight=self).values('msgField').order_by('msgField').distinct()
+        return MavDatum.objects.filter(message__flight=self).values('msgField').order_by('msgField').distinct().values_list('msgField',flat=True)
     
     @property
     def length(self):

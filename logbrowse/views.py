@@ -110,8 +110,8 @@ def flightIndex(request):
         try:
             timelineEventList.append(
                 {"start":flight.startTime.isoformat(),
-                "end":flight.startTime.isoformat(),
-                "content":"<a href=%s>%s</a>" % (flight.get_absolute_url(), flight.id),
+                "end":flight.endTime.isoformat(),
+                "content":"<a href=%s> %s </a>" % (flight.get_absolute_url(), flight.id),
                 "group":"flight"
                 })
         except AttributeError:
@@ -119,9 +119,9 @@ def flightIndex(request):
         # Get the last GPS coordinate for each flight to add to the flight index map.
         # We use the last one because it's more likely to be a better fix that the first.
         try:
-            latestGPSmsg=flight.mavmessage_set.filter(msgType="GLOBAL_POSITION_INT").latest()
-            lat=latestGPSmsg.mavdatum_set.get(msgField='lat').value/1e7
-            lon=latestGPSmsg.mavdatum_set.get(msgField='lon').value/1e7
+            latestGPSmsg=flight.mavmessage_set.filter(msgType__in=["GLOBAL_POSITION_INT","df_GPS"]).latest()
+            lat=latestGPSmsg.mavdatum_set.get(msgField__in=['lat','Lat']).value/1e7
+            lon=latestGPSmsg.mavdatum_set.get(msgField__in=['lon','Long']).value/1e7
             if lon != 0 and lat != 0: #TODO should actually check the GPS_STATUS messages to throw away points where there is no fix
                 flightStartLocsJSON['features'].append(
                     {
@@ -130,7 +130,7 @@ def flightIndex(request):
                             "type":"Point",
                             "coordinates":[lon,lat]
                         },
-                     "properties":{"number":flight.pk,"name":unicode(flight),"slug":flight.slug}
+                     "properties":{"number":" "+str(flight.pk)+" ","name":unicode(flight),"slug":flight.slug}
                      })
 
             
@@ -142,10 +142,10 @@ def flightIndex(request):
 
     for video in FlightVideo.objects.all():
         vidDescription="<a href=%s>" % video.url
-        if video.onboard:
-            vidDescription+="Start of onboard video"
-        else:
-            vidDescription+="Start of offboard video"
+        #if video.onboard:
+            #vidDescription+="Start of onboard video"
+        #else:
+            #vidDescription+="Start of offboard video"
         vidDescription+="</a>"
         try:
             timelineEventList.append(
