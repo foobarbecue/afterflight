@@ -14,6 +14,7 @@
 
 from django.conf.urls import patterns, include, url
 from django.views.generic.list_detail import *
+from django.views.generic.simple import direct_to_template
 from django.contrib import admin
 from logbrowse.models import Flight
 from logbrowse.views import *
@@ -34,6 +35,7 @@ urlpatterns = patterns('',
     url(r'^tg_timeline/$',timegliderFormatFlights, name='timeline'),
     url(r'^flight/$',flightIndex, name='timeline'),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^about/', direct_to_template, {'template':'about.html'}),
 )
 
 if settings.DEBUG:

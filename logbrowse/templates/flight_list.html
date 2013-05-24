@@ -39,8 +39,12 @@ var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
 
 <div id="header">
 <h1>Afterflight: UAV log analysis suite</h1>
-<p class="nav-status">Listing {{object_list.count}} flights</p>
-<div class='acct-links'>Home | Login | Register | About</div>
+<p class="nav-status">Version 0.1 alpha. Listing {{object_list.count}} flights</p>
+<div class='acct-links'>
+<a href=/>Home</a>
+| <a href=/admin>Login</a>
+| Register 
+| <a href=/about>About</a></div>
 </div>
 
 
@@ -54,8 +58,8 @@ var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
         <th>Comments</th>
 
     {% for flight in object_list %}
-        <tr logpk=" {{flight.pk}} ">
-            <td><a href=/flight/{{flight.slug}}> {{flight.id}} </a></td>
+        <tr logpk="{{flight.pk}}" onclick="document.location = '/flight/{{flight.slug}}';">
+            <td>{{flight.id}}</td>
             <td>{{flight.startTime}}</td>
             <td>{% if flight.length %}{{flight.lengthStr}}{% endif %}</td>
             <td>{{flight.comments|truncatewords:10}}</td>
@@ -90,13 +94,11 @@ var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
         };
         function highlightFlightInTable(event){
             $("#flights-table>tbody>tr").removeClass('highlighted')
-            flightsTableEntry=$("#flights-table>tbody>tr:contains(L"+event.target.textContent+" )")
+            flightsTableEntry=$("#flights-table tr[logpk="+event.target.textContent+"]")
             flightsTableEntry.addClass('highlighted')
             flightsTableEntry.scrollIntoView(100)
         };
-        function unHighlightFlightInTable(event){
-            $("#flights-table>tbody>tr:contains(Log "+event.target.textContent+")").removeClass('highlighted')
-        };
+
         function highlightFlightOnTL(event){
             //TODO. Should be some more direct connection between flights on the table and in the timeline.
             //Maybe draw the table from the timeline using JS.
@@ -189,11 +191,23 @@ function initMap() {
     flightMap.addLayers([bhybrid, vector_layer]);
     flightMap.zoomToExtent(vector_layer.getDataExtent());
 
+    function flightSelected(feature){
+    //window.open(evt.feature.attributes.slug,"Window1");
+    //selectCtrl.unselectAll();
+    // would be nice to use the highlightFlightInTable function here, but it takes the wrong kind of event...
+    
+    
+    selectOnWidgets(feature.attributes.number)
+    
+    return false;
+    }
+    
     // Adding hover and click events
     highlightCtrl = new OpenLayers.Control.SelectFeature(vector_layer, {
     hover: true,
     //highlightOnly: true,
     renderIntent: "selected",
+    onSelect: flightSelected
     });
 
     flightMap.addControl(highlightCtrl);
@@ -201,22 +215,13 @@ function initMap() {
     //flightMap.addControl(selectCtrl);
     //selectCtrl.activate();
     
-    function flightSelected(evt){
-        //window.open(evt.feature.attributes.slug,"Window1");
-        //selectCtrl.unselectAll();
-        // would be nice to use the highlightFlightInTable function here, but it takes the wrong kind of event...
-        
-        
-        selectOnWidgets(evt.feature.attributes.number)
-        
-        return false;
-    }
-    vector_layer.events.register("beforeselected", vector_layer, flightSelected);
+
+    //vector_layer.events.register("beforeselected", vector_layer, flightSelected);
+    
 };
     // Select all things that represent one log, given its ID
     function selectOnWidgets(logpk){
     
-        $('.timeline-event:contains('+logpk+')').addClass('highlighted')
         //map
         //check that it's not already selected, to avoid infinite recursion
         res=vector_layer.getFeaturesByAttribute("number",logpk)[0]
@@ -224,15 +229,16 @@ function initMap() {
             if ($.inArray(res,vector_layer.selectedFeatures)==-1) {
                 highlightCtrl.unselectAll()
                 highlightCtrl.select(res)
+                flightMap.setCenter(new OpenLayers.LonLat(res.geometry.x,res.geometry.y))
             }
         }
         catch(e){}
         //table
-        flightsTableEntry=$('#flights-table>tbody>tr:contains('+logpk+')')
+        flightsTableEntry=$('#flights-table>tbody>tr[logpk='+logpk+']')
         flightsTableEntry.scrollIntoView(100)        
         flightsTableEntry.addClass('highlighted')  
         //timeline
-        
+        $('.timeline-event a[logpk='+logpk+']').parent().addClass('highlighted')
     }
     // Unselect all things
     function unselectOnWidgets(evt){

@@ -110,9 +110,10 @@ def flightIndex(request):
         try:
             timelineEventList.append(
                 {"start":flight.startTime.isoformat(),
-                "end":flight.endTime.isoformat(),
-                "content":"<a href=%s> %s </a>" % (flight.get_absolute_url(), flight.id),
-                "group":"flight"
+                "end":flight.startTime.isoformat(),
+                "content":"<a href=%s logpk=%s>%s</a>" % (flight.get_absolute_url(), flight.id, flight.id),
+                "group":"flight",
+                "test":"test"
                 })
         except AttributeError:
             pass
@@ -130,7 +131,7 @@ def flightIndex(request):
                             "type":"Point",
                             "coordinates":[lon,lat]
                         },
-                     "properties":{"number":" "+str(flight.pk)+" ","name":unicode(flight),"slug":flight.slug}
+                     "properties":{"number":unicode(flight.pk),"name":unicode(flight),"slug":flight.slug}
                      })
 
             
