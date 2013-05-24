@@ -298,7 +298,7 @@ $("#detailsContainer").tabs() // activate jquery ui tabs
 //$("#plotContainer").tabs() 
 addDataToPlot = function() {
     $.ajax({
-        type:"GET",
+        type:'GET',
         url:'/data',
         data:$('#sensorPlotDataForm').serialize(),
         }).done(function (data) {
@@ -412,13 +412,13 @@ function addVideoToTimeline() {
             <p>Left y axis:
             <select name="left_axis">
                 {% for msg_field in object.messageFieldsRecorded %}
-                    <option value="{{msg_field.msgField}}">{{msg_field}}</a>
+                    <option value="{{msg_field}}">{{msg_field}}</a>
                 {% endfor %}
             </select></p>
             <p>Right y axis:
             <select name="right_axis">
                 {% for msg_field in object.messageFieldsRecorded %}
-                    <option value="{{msg_field.msgField}}">{{msg_field}}</a>
+                    <option value="{{msg_field}}">{{msg_field}}</a>
                 {% endfor %}
             </select></p>
             <input type="hidden" name="flight" value="{{object}}" />
