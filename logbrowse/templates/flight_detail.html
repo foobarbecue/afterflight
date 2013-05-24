@@ -299,7 +299,7 @@ $("#detailsContainer").tabs() // activate jquery ui tabs
 addDataToPlot = function() {
     $.ajax({
         type:"GET",
-        url:'http://volcanocopter.com:8000/data',
+        url:'/data',
         data:$('#sensorPlotDataForm').serialize(),
         }).done(function (data) {
             sensorPlot.replot({data:data})
@@ -308,7 +308,22 @@ addDataToPlot = function() {
     return false
 }
 
+function annotateTimeline() {
+    timeline.addItem({
+        'start': timeline.customTime,
+        'content': $('#annotationText').val(),
+        'group': 'Annotations'
+    });
+
+    var count = data.getNumberOfRows();
+    timeline.setSelection([{
+        'row': count-1
+    }]);
+    return false
+}
+
 $('#sensorPlotDataForm').submit(addDataToPlot)
+$('#timelineController form').submit(annotateTimeline)
 }); // end of jquery document.ready function
 
 function onYouTubePlayerReady(playerId) {
@@ -338,7 +353,11 @@ function addVideoToTimeline() {
 <div id="header">
 <h1>Afterflight: UAV log analysis suite</h1>
 <p class="nav-status">Version 0.1 alpha. Viewing flight "{{object}}"</p>
-<div class='acct-links'><a href=http://volcanocopter.com:8000/flight>Home</a> | Login | Register | About</div>
+<div class='acct-links'>
+<a href=/>Home</a>
+| <a href=/admin>Login</a>
+| Register 
+| <a href=/about>About</a></div>
 </div>
 
 <div id="detailsContainer">
@@ -413,10 +432,13 @@ function addVideoToTimeline() {
 </div>
 <div id="timelineContainer">
     <h2>Flight event timeline</h2>
-    <form id="timelineController">
-        <input type="text" id="annotationText"></input>
-        <input type="submit" value="Add annotation"></submit>
-    </form>
+    <div id="timelineController">
+        <form>
+        <input type="text" value="Annotation text" id="annotationText"></input>
+        <input type="submit" value="Add annotation at blue time bar"></submit>
+        <input type="submit" value="Save annotations"></submit>
+        </form>
+    </div>
     <div id="timeline">Timeline loading...</div>
 </div>
 
