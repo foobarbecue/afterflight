@@ -28,7 +28,7 @@ from django.contrib.auth.models import User
 from django.db import transaction, reset_queries
 from django.template.defaultfilters import slugify
 
-@transaction.commit_on_success
+
 def readInLog(filepath):
     print "Importing " + filepath
     if filepath.endswith('.log'):
@@ -45,7 +45,7 @@ def readInDfLog(filepath, startdate=None):
 
 def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml'):
     #Read in the dataflash log format and put it in a dictionary df_msg_types
-    with open(xml_format_file,'r') as df_log_format_file:    
+    with open(xml_format_file,'r') as df_log_format_file:
         df_log_xml=et.parse(df_log_format_file).getroot()
         APM=df_log_xml.find('APM')
         AC2=df_log_xml.find('AC2')
@@ -133,6 +133,8 @@ def readInTLog(filepath):
         newFlight.slug=slugify(filename)
         print "slug is %s" % newFlight.slug
         newFlight.save()
+        mavMessages=[]
+        mavData=[]
         while True:
             try:
                 m=mlog.recv_msg()
@@ -142,7 +144,7 @@ def readInTLog(filepath):
                     continue
                 timestamp=datetime.fromtimestamp(m._timestamp)
                 newMessage=MavMessage(msgType=m._type, timestamp=timestamp, flight=newFlight)
-                newMessage.save()
+                mavMessages.append(newMessage)
                 m=m.to_dict()
                 for key, item in m.items():
                     if key!='mavpackettype':
@@ -152,10 +154,13 @@ def readInTLog(filepath):
                             #print "non-number value in %s" % m
                             continue
                         newDatum=MavDatum(msgField=key,value=value,message=newMessage)
-                        newDatum.save()
+                        mavData.append(newDatum)
             #end of logfile triggers an AttributeError. A more robust way of detecting this would be better. TODO
             except AttributeError:
-                newFlight.save()
+                #These bulk inserts only work with a patched version of Django, otherwise PKs are not created. Patch is at
+                #https://code.djangoproject.com/attachment/ticket/19527/bulk_create_and_create_schema_django_v1.5.1.patch
+                res=MavMessage.objects.bulk_create(mavMessages)
+                MavDatum.objects.bulk_create(mavData)
                 return newFlight
     else:
         print "already imported %s" % newFlight.logfile.name

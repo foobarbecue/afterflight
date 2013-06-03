@@ -12,11 +12,16 @@
    #See the License for the specific language governing permissions and
    #limitations under the License.
 
-from django.utils import simplejson
+try:
+    import ujson as json
+    print 'imported ujson'
+except:
+    print 'could not find ujson'
+    from django.utils import ujson as json
 from models import Flight, FlightVideo, MavDatum
 from django.shortcuts import render_to_response
 from django.http import HttpResponse
-import calendar, datetime, json
+import calendar, datetime
 from utils import dt2jsts
 # Create your views here.
 def flightDetail(request, slug):
@@ -53,7 +58,7 @@ def flightDetail(request, slug):
         timelineEventList.append(timelineDictForEvt)
 
     return render_to_response('flight_detail.html',{
-        'timeline_data':simplejson.dumps(timelineEventList),
+        'timeline_data':json.dumps(timelineEventList),
         'initial_plot':flight.initial_plot(),
         'object':flight})
 
@@ -88,7 +93,7 @@ def timegliderFormatFlights(request):
         'title':'flight_timeline',
         'events':flightList[0:3]
         }
-    return render_to_response('timeline.html',{'timeline_data': simplejson.dumps([flightListWheader,])})
+    return render_to_response('timeline.html',{'timeline_data': json.dumps([flightListWheader,])})
 
 def flightIndex(request):
     timelineEventList=[]
@@ -155,10 +160,10 @@ def flightIndex(request):
                 "group":"video"})
         except AttributeError:
             pass
-   
+    
     return render_to_response('flight_list.html',
         {
         'object_list':Flight.objects.all(),
-        'timeline_data': simplejson.dumps(timelineEventList),
-        'flightStartLocs': simplejson.dumps(flightStartLocsJSON)
+        'timeline_data': json.dumps(timelineEventList),
+        'flightStartLocs': json.dumps(flightStartLocsJSON)
         })

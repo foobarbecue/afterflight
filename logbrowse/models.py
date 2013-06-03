@@ -119,13 +119,19 @@ class Flight(models.Model):
     
     @property
     def startTime(self):
-        if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
-            return self.mavmessage_set.exclude(msgType='BAD_DATA').order_by('timestamp')[0].timestamp
+        #if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
+        try:
+            return self.mavmessage_set.exclude(msgType='BAD_DATA').order_by('-timestamp')[0].timestamp
+        except IndexError:
+            pass
     
     @property
     def endTime(self):
-        if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
-            return self.mavmessage_set.exclude(msgType='BAD_DATA').order_by('-timestamp')[0].timestamp
+        #if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
+        try:
+            return self.mavmessage_set.exclude(msgType='BAD_DATA').latest('timestamp').timestamp
+        except IndexError:
+            pass
     
     @property
     def gpsTimestamps(self):
@@ -193,7 +199,7 @@ class FlightVideo(models.Model):
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
-    timestamp=models.DateTimeField()
+    timestamp=models.DateTimeField(db_index=True)
     flight=models.ForeignKey('Flight')
 
     def __unicode__(self):
