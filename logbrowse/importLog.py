@@ -144,7 +144,8 @@ def readInTLog(filepath):
                     continue
                 timestamp=datetime.fromtimestamp(m._timestamp)
                 newMessage=MavMessage(msgType=m._type, timestamp=timestamp, flight=newFlight)
-                mavMessages.append(newMessage)
+                #mavMessages.append(newMessage)
+                newMessage.save()
                 m=m.to_dict()
                 for key, item in m.items():
                     if key!='mavpackettype':
@@ -157,9 +158,8 @@ def readInTLog(filepath):
                         mavData.append(newDatum)
             #end of logfile triggers an AttributeError. A more robust way of detecting this would be better. TODO
             except AttributeError:
-                #These bulk inserts only work with a patched version of Django, otherwise PKs are not created. Patch is at
-                #https://code.djangoproject.com/attachment/ticket/19527/bulk_create_and_create_schema_django_v1.5.1.patch
-                res=MavMessage.objects.bulk_create(mavMessages)
+                #Can't get bulk_create to work here because you end up with blank message_id s on the mavData TODO
+                #res=MavMessage.objects.bulk_create(mavMessages)
                 MavDatum.objects.bulk_create(mavData)
                 return newFlight
     else:

@@ -121,7 +121,7 @@ class Flight(models.Model):
     def startTime(self):
         #if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
         try:
-            return self.mavmessage_set.exclude(msgType='BAD_DATA').order_by('-timestamp')[0].timestamp
+            return self.mavmessage_set.exclude(msgType='BAD_DATA').order_by('timestamp')[0].timestamp
         except IndexError:
             pass
     

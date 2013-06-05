@@ -1,53 +1,19 @@
-<!--
-    Copyright 2013 Aaron Curtis
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
--->
-<html>
-<head>
-    <title>Volcanocopter flight list</title>
-    <script type="text/javascript" src="/static/js/timeline.js"></script>
-    <script type="text/javascript" src="/static/js/jquery.min.js"></script>
-    <script type="text/javascript" src="/static/js/jquery.scrollIntoView.min.js"></script>        
-    <link rel="stylesheet" type="text/css" href="/static/css/flightList.css">
-    <link rel="stylesheet" type="text/css" href="/media/css/common.css">
-    <script src="/media/js/openlayers/OpenLayers.js"></script>
-    <script type="text/javascript" src="/media/js/timeline.js"></script>
-    <link rel="stylesheet" type="text/css" href="/media/css/timeline.css">
-    <script src="/media/js/openlayers/lib/Control/ScaleBar.js"></script>
-    <script>
-    var WGS84 = new OpenLayers.Projection('EPSG:4326');
+{% extends "base.html" %}
+{% load socialaccount %}
+{% providers_media_js %}
+{% block head %}
+<link rel="stylesheet" type="text/css" href="/static/css/flightList.css">
+<script>
+var WGS84 = new OpenLayers.Projection('EPSG:4326');
 var MERCATOR = new OpenLayers.Projection('EPSG:900913');
 var size = new OpenLayers.Size(21, 25);
 var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
 var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
 var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
 </script>
-</head>
-
-<body>
-
-<div id="header">
-<h1>Afterflight: UAV log analysis suite</h1>
-<p class="nav-status">Version 0.1 alpha. Listing {{object_list.count}} flights</p>
-<div class='acct-links'>
-<a href=/>Home</a>
-| <a href=/admin>Login</a>
-| Register 
-| <a href=/about>About</a></div>
-</div>
-
-
+{% endblock head %}
+{% block nav-status%}Listing {{object_list.count}} flights {% endblock %}
+{% block content %}
 <div id="info">
 
 <table id="flights-table">
@@ -270,5 +236,5 @@ function initMap() {
     }
 );    
     </script>
-</body>
-</html>
+
+{% endblock content %}

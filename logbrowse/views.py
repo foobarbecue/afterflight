@@ -17,9 +17,11 @@ try:
     print 'imported ujson'
 except:
     print 'could not find ujson'
-    from django.utils import ujson as json
+    from django.utils import simplejson as json
+
+
 from models import Flight, FlightVideo, MavDatum
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.http import HttpResponse
 import calendar, datetime
 from utils import dt2jsts
@@ -57,7 +59,7 @@ def flightDetail(request, slug):
             timelineDictForEvt['group']='Annotations'
         timelineEventList.append(timelineDictForEvt)
 
-    return render_to_response('flight_detail.html',{
+    return render(request, 'flight_detail.html',{
         'timeline_data':json.dumps(timelineEventList),
         'initial_plot':flight.initial_plot(),
         'object':flight})
@@ -93,7 +95,7 @@ def timegliderFormatFlights(request):
         'title':'flight_timeline',
         'events':flightList[0:3]
         }
-    return render_to_response('timeline.html',{'timeline_data': json.dumps([flightListWheader,])})
+    return render(request,'timeline.html',{'timeline_data': json.dumps([flightListWheader,])})
 
 def flightIndex(request):
     timelineEventList=[]
@@ -138,13 +140,9 @@ def flightIndex(request):
                         },
                      "properties":{"number":unicode(flight.pk),"name":unicode(flight),"slug":flight.slug}
                      })
-
-            
         #should be except DoesNotExist, find where to import that from
         except:
-            pass
-
-    
+            pass    
 
     for video in FlightVideo.objects.all():
         vidDescription="<a href=%s>" % video.url
@@ -161,7 +159,8 @@ def flightIndex(request):
         except AttributeError:
             pass
     
-    return render_to_response('flight_list.html',
+    return render(request,
+        'flight_list.html',
         {
         'object_list':Flight.objects.all(),
         'timeline_data': json.dumps(timelineEventList),
