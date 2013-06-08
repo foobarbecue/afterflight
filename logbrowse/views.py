@@ -21,11 +21,36 @@ except:
 
 
 from models import Flight, FlightVideo, MavDatum
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.forms import ModelForm
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.views.generic.edit import CreateView
+from django.utils.decorators import method_decorator
+from django.utils.text import slugify
+from django.conf import settings
+from logbrowse import importLog
 import calendar, datetime
 from utils import dt2jsts
 # Create your views here.
+
+class FlightCreate(CreateView):
+    model = Flight
+    fields = ['comments','logfile']
+    
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(FlightCreate, self).dispatch(*args, **kwargs)    
+    
+    def form_valid(self, form):
+        form.instance.pilot = self.request.user
+        form.instance.slug = slugify(form.instance.logfile.name.split('/')[-1])
+        print "logfile in flightcreate is" + form.instance.logfile.name
+        
+        return super(FlightCreate, self).form_valid(form)
+
+
 def flightDetail(request, slug):
     print 'loading' + slug
     flight=Flight.objects.get(slug=slug)
@@ -97,6 +122,10 @@ def timegliderFormatFlights(request):
         }
     return render(request,'timeline.html',{'timeline_data': json.dumps([flightListWheader,])})
 
+class LogUploadForm(ModelForm):
+    class Meta:
+        model = Flight
+
 def flightIndex(request):
     timelineEventList=[]
     flightStartLocs=[]
@@ -166,3 +195,4 @@ def flightIndex(request):
         'timeline_data': json.dumps(timelineEventList),
         'flightStartLocs': json.dumps(flightStartLocsJSON)
         })
+        

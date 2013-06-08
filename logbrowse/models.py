@@ -16,6 +16,7 @@ import calendar, scipy
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from datetime import timedelta
 from utils import dt2jsts
 # Create your models here.
@@ -173,6 +174,12 @@ class Flight(models.Model):
 
     #for msgField in messageFieldsRecorded:
         #self.__dict__['%sJSON' % msgField]=lambda: MavDatum.objects.filter(message__flight=self, msgField=msgField).values_list('message__timestamp','value')
+    
+    #overwritten save method to import the logfile if this is a new instance
+    def save(self, *args, **kwargs):
+        super(Flight, self).save(*args, **kwargs)
+        from logbrowse import importLog
+        importLog.readInLog(settings.MEDIA_ROOT + self.logfile.name)
     
     def get_absolute_url(self):
         return reverse('flights', args=[self.slug])

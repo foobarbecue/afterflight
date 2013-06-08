@@ -31,11 +31,9 @@ from django.template.defaultfilters import slugify
 
 def readInLog(filepath):
     print "Importing " + filepath
-    if filepath.endswith('.log'):
-        reset_queries()
+    if filepath.endswith('.log'):        
         return readInDfLog(filepath)
     elif filepath.endswith('.tlog'):
-        reset_queries()
         return readInTLog(filepath)
     
 def readInDfLog(filepath, startdate=None):
@@ -127,12 +125,10 @@ def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml'
 
 def readInTLog(filepath):
     mlog = mavutil.mavlink_connection(filepath)
-    newFlight, created=Flight.objects.get_or_create(logfile=filepath)
-    if created:
+    newFlight, created=Flight.objects.get_or_create(logfile__icontains=filepath.split('/')[-1])
+    if created or (newFlight.mavmessage_set.count() == 0):
         filename=re.match(r'.*/(.*)$',newFlight.logfile.name).groups()[0]
         newFlight.slug=slugify(filename)
-        print "slug is %s" % newFlight.slug
-        newFlight.save()
         mavMessages=[]
         mavData=[]
         while True:
@@ -170,3 +166,5 @@ def readInDirectory(log_dir_path):
     log_filenames=os.listdir(log_dir_path)
     for log_filename in log_filenames:
         readInLog(os.path.join(log_dir_path, log_filename))
+        reset_queries()
+

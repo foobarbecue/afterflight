@@ -37,6 +37,7 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     #url(r'^about/', direct_to_template, {'template':'about.html'}),
     url(r'^about', TemplateView.as_view(template_name='about.html')),
+    url(r'^upload', FlightCreate.as_view(), name='flight_create'),
     (r'^accounts/', include('allauth.urls')),
 )
 
