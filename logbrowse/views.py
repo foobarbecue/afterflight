@@ -105,28 +105,15 @@ def plotDataJSON(request):
     data='[%s,%s]' % (right_axis_data,left_axis_data)
     return HttpResponse(data, content_type='application/json')
         
-def timegliderFormatFlights(request):
-    flightList=[]
-    for flight in Flight.objects.all():
-        #optimize this later-- should be single db transaction
-        flightList.append(
-            {"id":flight.pk,
-            "title":flight.slug,
-            "startdate":dt2jsts(flight.startTime),
-            "enddate":dt2jsts(flight.endTime)})
-    #add the timeline header information
-    flightListWheader={
-        'id':'flight_timeline',
-        'title':'flight_timeline',
-        'events':flightList[0:3]
-        }
-    return render(request,'timeline.html',{'timeline_data': json.dumps([flightListWheader,])})
-
 class LogUploadForm(ModelForm):
     class Meta:
         model = Flight
 
-def flightIndex(request):
+def flightIndex(request, pilot=None):
+    if pilot:
+        flights=Flight.objects.filter(pilot__username=pilot)
+    else:
+        flights=Flight.objects.all()
     timelineEventList=[]
     flightStartLocs=[]
     flightStartLocsJSON = {
@@ -141,7 +128,7 @@ def flightIndex(request):
                 },
         },]
     };
-    for flight in Flight.objects.all():
+    for flight in flights:
         #optimize this later-- should be single db transaction
         try:
             timelineEventList.append(

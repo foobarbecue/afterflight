@@ -16,7 +16,7 @@
 Reads a .tlog using pymavlink into the afterflight database
 todo: get_or_creates should be checking MAV id
 '''
-import sys, os, re, pdb
+import sys, os, re
 from datetime import datetime, timedelta
 from django.conf import settings
 # allow import from where mavlink.py is
@@ -29,19 +29,20 @@ from django.db import transaction, reset_queries
 from django.template.defaultfilters import slugify
 
 
-def readInLog(filepath):
+def readInLog(filepath, **kwargs):
     print "Importing " + filepath
     if filepath.endswith('.log'):        
-        return readInDfLog(filepath)
+        return readInDfLog(filepath, **kwargs)
     elif filepath.endswith('.tlog'):
-        return readInTLog(filepath)
+        return readInTLog(filepath, **kwargs)
     
-def readInDfLog(filepath, startdate=None):
+def readInDfLog(filepath, startdate=None, **kwargs):
     #TODO expand this to deal with the new self-describing log format
-    startdate=datetime.strptime(filepath.split('/')[-1][:10],'%Y-%m-%d')
-    readInDfLogOldFormat(filepath=filepath, startdate=startdate, xml_format_file='dataflashlog.xml')
+    if not startdate:
+        startdate=datetime.strptime(filepath.split('/')[-1][:10],'%Y-%m-%d')
+    readInDfLogOldFormat(filepath=filepath, startdate=startdate, xml_format_file='dataflashlog.xml', **kwargs)
 
-def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml'):
+def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml', **kwargs):
     #Read in the dataflash log format and put it in a dictionary df_msg_types
     with open(xml_format_file,'r') as df_log_format_file:
         df_log_xml=et.parse(df_log_format_file).getroot()
@@ -59,26 +60,29 @@ def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml'
         time_dict[df_msg_type]={'lag':timedelta(milliseconds=100),'cur_timestamp':None}
         #Unlike the timestamped GPS messages, which happen at 10hz, RAW messages come in at 50hz
     time_dict['RAW']['lag']=timedelta(milliseconds=20)
-    
     newFlight, created=Flight.objects.get_or_create(logfile=filepath)
     if created:
         filename=re.match(r'.*/(.*)$',newFlight.logfile.name).groups()[0]
         newFlight.slug=slugify(filename)
-        newFlight.save()
+        newFlight.save(**kwargs)
         logFile=open(filepath,'r')
         prev_timestamp={}
         
-        #throw away data until we have a timestamp TODO deal with when gps logging is off...
-        for log_line in logFile:
-            if log_line.startswith('GPS'):
-                #set all of the cur_timestamps to the first GPS point TODO we are throwing this point away right now
-                log_line=log_line.split(',')
-                cur_timestamp=timedelta(milliseconds=int(log_line[1]))+startdate
-                for df_msg_type in time_dict:
-                    time_dict[df_msg_type]['cur_timestamp']=cur_timestamp
-                break
-            else:
-                continue
+        if gpstime:
+            #throw away data until we have a timestamp TODO deal with when gps logging is off...
+            for log_line in logFile:
+                if log_line.startswith('GPS'):
+                    #set all of the cur_timestamps to the first GPS point TODO we are throwing this point away right now
+                    log_line=log_line.split(',')
+                    cur_timestamp=timedelta(milliseconds=int(log_line[1]))+startdate
+                    for df_msg_type in time_dict:
+                        time_dict[df_msg_type]['cur_timestamp']=cur_timestamp
+                    break
+                else:
+                    continue
+        else:
+            for df_msg_type in time_dict:
+                time_dict[df_msg_type]['cur_timestamp']=startdate
 
         
         for log_line in logFile:
@@ -162,9 +166,10 @@ def readInTLog(filepath):
         print "already imported %s" % newFlight.logfile.name
         return newFlight
 
-def readInDirectory(log_dir_path):
+def readInDirectory(log_dir_path, **kwargs):
+    # kwargs is just for gpstime for now
     log_filenames=os.listdir(log_dir_path)
     for log_filename in log_filenames:
-        readInLog(os.path.join(log_dir_path, log_filename))
+        readInLog(os.path.join(log_dir_path, log_filename), **kwargs)
         reset_queries()
 

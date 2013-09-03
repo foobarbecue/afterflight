@@ -176,10 +176,10 @@ class Flight(models.Model):
         #self.__dict__['%sJSON' % msgField]=lambda: MavDatum.objects.filter(message__flight=self, msgField=msgField).values_list('message__timestamp','value')
     
     #overwritten save method to import the logfile if this is a new instance
-    def save(self, *args, **kwargs):
+    def save(self, gpstime=True, *args, **kwargs):
         super(Flight, self).save(*args, **kwargs)
         from logbrowse import importLog
-        importLog.readInLog(settings.MEDIA_ROOT + self.logfile.name)
+        importLog.readInLog(settings.MEDIA_ROOT + self.logfile.name, gpstime=gpstime)
     
     def get_absolute_url(self):
         return reverse('flights', args=[self.slug])
