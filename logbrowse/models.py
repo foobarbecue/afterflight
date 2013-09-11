@@ -12,13 +12,14 @@
    #See the License for the specific language governing permissions and
    #limitations under the License.
 
-import calendar, scipy
+import calendar, scipy, flyingrhino
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from django.db import connection as dbconn
 from datetime import timedelta
-from utils import dt2jsts
+from af_utils import dt2jsts
 # Create your models here.
 
 MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
@@ -51,7 +52,7 @@ class Flight(models.Model):
     video=models.URLField(blank=True, null=True)
     battery=models.ForeignKey('Battery',blank=True, null=True, )
     airframe=models.ForeignKey('Airframe', blank=True, null=True)
-    slug=models.SlugField()
+    slug=models.SlugField(primary_key=True)
 
     def thrData(self):
         vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='throttle')
@@ -186,6 +187,15 @@ class Flight(models.Model):
     
     class Meta:
         ordering = ['comments','slug']
+    
+    def read_dflog(self, logfile_path=None):
+        if not logfile_path:
+            logfile_path=self.logfile.name
+        fr_flight=flyingrhino.flight(logfile_path)
+        cursor=dbconn.cursor()
+        cursor.execute('PRAGMA temp_store = MEMORY;')
+        cursor.execute('PRAGMA synchronous = OFF;')
+        fr_flight.to_afterflight_sql(dbconn=dbconn)
 
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
@@ -206,7 +216,7 @@ class FlightVideo(models.Model):
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
-    timestamp=models.DateTimeField(db_index=True)
+    timestamp=models.DateTimeField(db_index=True, primary_key=True)
     flight=models.ForeignKey('Flight')
 
     def __unicode__(self):
@@ -217,7 +227,8 @@ class MavMessage(models.Model):
         ordering = ['timestamp']
     
 class MavDatum(models.Model):
-    message=models.ForeignKey('MavMessage')
+    #Use timestamp as the reference to the mavmessage -- it's the primary key on mavmessage
+    message=models.ForeignKey('MavMessage',db_column='timestamp')
     msgField=models.CharField(max_length=40)
     value=models.FloatField()
 
