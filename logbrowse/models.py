@@ -18,6 +18,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.db import connection as dbconn
+from django.db import transaction
 from datetime import timedelta
 from af_utils import dt2jsts
 # Create your models here.
@@ -193,9 +194,9 @@ class Flight(models.Model):
             logfile_path=self.logfile.name
         fr_flight=flyingrhino.flight(logfile_path)
         cursor=dbconn.cursor()
-        cursor.execute('PRAGMA temp_store = MEMORY;')
-        cursor.execute('PRAGMA synchronous = OFF;')
+        transaction.enter_transaction_management()
         fr_flight.to_afterflight_sql(dbconn=dbconn)
+        transaction.commit()
 
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
@@ -228,6 +229,7 @@ class MavMessage(models.Model):
     
 class MavDatum(models.Model):
     #Use timestamp as the reference to the mavmessage -- it's the primary key on mavmessage
+#     TODO: can we have joint primary key using message and msgfield?
     message=models.ForeignKey('MavMessage',db_column='timestamp')
     msgField=models.CharField(max_length=40)
     value=models.FloatField()
