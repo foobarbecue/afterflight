@@ -231,7 +231,7 @@ class MavDatum(models.Model):
     #Use timestamp as the reference to the mavmessage -- it's the primary key on mavmessage
 #     TODO: can we have joint primary key using message and msgfield?
     rowid=models.IntegerField(primary_key=True)
-    message=models.ForeignKey('MavMessage',db_column='timestamp')
+    message=models.ForeignKey('MavMessage',null=True)
     msgField=models.CharField(max_length=40)
     value=models.FloatField()
     timestamp=models.IntegerField()
