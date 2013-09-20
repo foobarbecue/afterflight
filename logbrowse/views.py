@@ -32,7 +32,7 @@ from django.utils.text import slugify
 from django.conf import settings
 from logbrowse import importLog
 import calendar, datetime
-from utils import dt2jsts
+from af_utils import dt2jsts
 # Create your views here.
 
 class FlightCreate(CreateView):
