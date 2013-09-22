@@ -93,6 +93,10 @@ class Flight(models.Model):
             #probably because it is a dataflash log, not a tlog
             right_yax='Mot 1'
             left_yax='Mot 2'
+        elif 'Mot1' in self.messageFieldsRecorded:
+            #probably because it is a dataflash log, not a tlog
+            right_yax='Mot1'
+            left_yax='Mot2'            
         elif 'roll_sensor' in self.messageFieldsRecorded:
             right_yax='roll_sensor'
             left_yax='pitch_sensor'
@@ -179,9 +183,12 @@ class Flight(models.Model):
     
     #overwritten save method to import the logfile if this is a new instance
     def save(self, gpstime=True, *args, **kwargs):
+        "Calling overridden save with logfile name" + self.logfile.name
         super(Flight, self).save(*args, **kwargs)
-        from logbrowse import importLog
-        importLog.readInLog(settings.MEDIA_ROOT + self.logfile.name, gpstime=gpstime)
+        #need to make this happen only on first save
+        #self.read_dflog()
+        #from logbrowse import importLog
+        #importLog.readInLog(settings.MEDIA_ROOT + self.logfile.name, gpstime=gpstime)
     
     def get_absolute_url(self):
         return reverse('flights', args=[self.slug])
@@ -195,7 +202,7 @@ class Flight(models.Model):
         fr_flight=flyingrhino.flight(logfile_path)
         cursor=dbconn.cursor()
         transaction.enter_transaction_management()
-        fr_flight.to_afterflight_sql(dbconn=dbconn)
+        fr_flight.to_afterflight_sql(dbconn=dbconn.connection,close_when_done=False)
         transaction.commit()
 
 class FlightVideo(models.Model):

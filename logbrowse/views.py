@@ -37,7 +37,7 @@ from af_utils import dt2jsts
 
 class FlightCreate(CreateView):
     model = Flight
-    fields = ['comments','logfile']
+    fields = ('comments','logfile','video')
     
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -45,9 +45,9 @@ class FlightCreate(CreateView):
     
     def form_valid(self, form):
         form.instance.pilot = self.request.user
-        form.instance.slug = slugify(form.instance.logfile.name.split('/')[-1])
-        print "logfile in flightcreate is" + form.instance.logfile.name
-        
+        form.instance.logfile.name =  slugify(form.instance.logfile.name.split('/')[-1])
+        #TODO: take out the slugfield entirely? It's the same as logfile.name...
+        form.instance.slug = form.instance.logfile.name       
         return super(FlightCreate, self).form_valid(form)
 
 
