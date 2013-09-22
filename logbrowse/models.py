@@ -217,7 +217,7 @@ class FlightVideo(models.Model):
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
-    timestamp=models.IntegerField(db_index=True, primary_key=True)
+    timestamp=models.DateTimeField(db_index=True, primary_key=True)
     flight=models.ForeignKey('Flight')
 
     def __unicode__(self):
@@ -231,10 +231,9 @@ class MavDatum(models.Model):
     #Use timestamp as the reference to the mavmessage -- it's the primary key on mavmessage
 #     TODO: can we have joint primary key using message and msgfield?
     rowid=models.IntegerField(primary_key=True)
-    message=models.ForeignKey('MavMessage',null=True)
+    message=models.ForeignKey('MavMessage',null=True,db_column='timestamp')
     msgField=models.CharField(max_length=40)
     value=models.FloatField()
-    timestamp=models.IntegerField()
 
     def epoch_timestamp(self):
         return calendar.gmtime(self.message.timestamp.timetuple())*1000
