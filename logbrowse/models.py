@@ -105,13 +105,18 @@ class Flight(models.Model):
     
     def lats(self):
         # The 'order_by' should be unnecessary, since it's already in the model's Meta, but seems only to work this way. *might be fixed now TODO
-        lats=MavDatum.objects.filter(message__flight=self, msgField__in=['lat','df_lat','Lat'], message__msgType__in=['GLOBAL_POSITION_INT','df_GPS']).order_by('message__timestamp')
-        return scipy.array(lats.values_list('value', flat=True))/1e7
+        lats=MavDatum.objects.filter(message__flight=self, msgField__in=['lat','Lat'], message__msgType__in=['GLOBAL_POSITION_INT','GPS']).order_by('message__timestamp')
+        lats=scipy.array(lats.values_list('value', flat=True))
+        if self.is_tlog:
+            lats=lats/1e7
+        return lats
         
     def lons(self):
-        lons=MavDatum.objects.filter(message__flight=self, msgField__in=['lon','df_lon','Long'], message__msgType__in=['GLOBAL_POSITION_INT','df_GPS']).order_by('message__timestamp')
-        
-        return scipy.array(lons.values_list('value', flat=True))/1e7
+        lons=MavDatum.objects.filter(message__flight=self, msgField__in=['lon','Lng','Long'], message__msgType__in=['GLOBAL_POSITION_INT','GPS']).order_by('message__timestamp')
+        lons=scipy.array(lons.values_list('value', flat=True))
+        if self.is_tlog:
+            lons=lons/1e7        
+        return lons
 
     def latLonsFlot(self):
         return ','.join([r'[%.1f,%.1f]' % latLon for latLon in zip(self.lats(), self.lons())])
@@ -221,6 +226,9 @@ class FlightVideo(models.Model):
     @property
     def startTimeJS(self):
         return dt2jsts(self.startTime)
+    
+    def get_absolute_url(self):
+        return reverse('flights', args=[self.flight.slug])
 
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
