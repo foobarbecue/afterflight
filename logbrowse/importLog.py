@@ -13,6 +13,7 @@
    #limitations under the License.
 
 '''
+THIS IS DEPRECATED. MOVING TO USING flyingrhino FOR IMPORT / EXPORT
 Reads a .tlog using pymavlink into the afterflight database
 todo: get_or_creates should be checking MAV id
 '''

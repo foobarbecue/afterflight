@@ -12,15 +12,15 @@
    #See the License for the specific language governing permissions and
    #limitations under the License.
 
-import calendar, scipy, flyingrhino
+import datetime, calendar, scipy, flyingrhino, pdb
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.db import connection as dbconn
 from django.db import transaction
-from datetime import timedelta
-from af_utils import dt2jsts
+from af_utils import dt2jsts, utc
+from pymavlink import mavutil
 # Create your models here.
 
 MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
@@ -188,10 +188,10 @@ class Flight(models.Model):
     
     #overwritten save method to import the logfile if this is a new instance
     def save(self, gpstime=True, *args, **kwargs):
-        "Calling overridden save with logfile name" + self.logfile.name
         super(Flight, self).save(*args, **kwargs)
         #need to make this happen only on first save
-        #self.read_dflog()
+        "Overridden save reading in log" + (self.logfile.name or '(no name)')
+        self.read_log()
         #from logbrowse import importLog
         #importLog.readInLog(settings.MEDIA_ROOT + self.logfile.name, gpstime=gpstime)
     
@@ -201,15 +201,46 @@ class Flight(models.Model):
     class Meta:
         ordering = ['comments','slug']
     
-    def read_dflog(self, logfile_path=None):
+    def read_log(self, logfile_path=None):
         if not logfile_path:
             logfile_path=self.logfile.name
-        fr_flight=flyingrhino.flight(logfile_path)
-        cursor=dbconn.cursor()
-        transaction.enter_transaction_management()
-        fr_flight.to_afterflight_sql(dbconn=dbconn.connection,close_when_done=False)
-        transaction.commit()
+        if not self.is_tlog:
+            #flyingrhino can't do tlogs yet. We assume it's a dataflash log if it's not a tlog.
+            fr_flight=flyingrhino.flight(logfile_path)
+            cursor=dbconn.cursor()
+            transaction.enter_transaction_management()
+            fr_flight.to_afterflight_sql(dbconn=dbconn.connection,close_when_done=False)
+            transaction.commit()
+        else:
+            self.read_tlog()
+            pass
 
+    def read_tlog(self):
+        mlog = mavutil.mavlink_connection(self.logfile.name)
+        mavData=[]
+        mavMessages=[]
+        while True:
+            m=mlog.recv_msg()
+            if not m:
+                break
+            if 'PARAM' in m._type:
+                continue
+            timestamp=datetime.datetime.fromtimestamp(m._timestamp, utc)
+            mavMessages.append(MavMessage(msgType=m._type, timestamp=timestamp, flight=self))
+            m=m.to_dict()
+            for key, item in m.items():
+                if key!='mavpackettype':
+                    try:
+                        value=float(item)
+                    except ValueError:
+                        #print "non-number value in %s" % m
+                        continue
+                    newDatum=MavDatum(msgField=key,value=value,message_id=timestamp)
+                    mavData.append(newDatum)
+        #Can't get bulk_create to work here because you end up with blank message_id s on the mavData TODO
+        MavMessage.objects.bulk_create(mavMessages)
+        MavDatum.objects.bulk_create(mavData)
+    
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
     #In seconds
@@ -220,7 +251,7 @@ class FlightVideo(models.Model):
     
     @property
     def startTime(self):
-        return self.flight.startTime+timedelta(seconds=self.delayVsLogstart)
+        return self.flight.startTime+datetime.timedelta(seconds=self.delayVsLogstart)
     #For youtube videos, we don't store the endtime. Instead, get it from javascript at runtime.
     
     @property
