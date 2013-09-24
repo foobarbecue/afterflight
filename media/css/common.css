@@ -1,0 +1,40 @@
+html, body {
+    font-size: 10pt;
+    font-family: verdana, sans, arial, sans-serif;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+h1 {
+    margin-bottom: 0;
+    font-weight: normal;
+    border-bottom: thin solid black;
+}
+h2 {
+    font-size: 12pt;
+    font-weight: bold;
+    color: teal;
+    position: absolute;
+    z-index: 10000;
+    margin: 0;
+    padding: 0px 5px;
+    background:#AAAAAA;
+    border-bottom-right-radius:8px;
+}
+.acct-links {
+    position: absolute;
+    top:0;
+    right:0;
+}
+.nav-status {
+    margin-top:0;
+    font-variant: small-caps;
+}
+
+#timeline {
+    height: 100%;
+}
+
+.upload_form, .http_error {
+    padding: 1em 1.4em;
+}

@@ -1,0 +1,81 @@
+/*   Copyright 2013 Aaron Curtis
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.*/
+
+.vidPlayer, .olMap {
+    height: 100%;
+    width: 100%;
+}
+
+#mapContainer, #plotContainer, #detailsContainer, #videoContainer {
+    float: left;
+    height: 31%;
+    width: 50%;
+    overflow-y: auto;
+    border: solid 1px teal;
+    /* Use negative margin to compensate for border */
+    margin: -1px;
+}
+
+#videoContainer > p {
+    padding: 1em 1.4em;
+}
+
+#timelineController{
+    margin-left: 20%;
+}
+
+#sensorPlot {
+    float:left;
+    height: 200px;
+    width: 400px;
+    margin: 10px;
+    margin-top: 20px;    
+}
+
+#timelineContainer {
+    float: left;
+    height: 29%;
+    width: 100%;
+    overflow: hidden;
+}
+
+
+.jqplot-yaxis {
+    color:#4bb2c5;
+}
+
+.jqplot-y2axis {
+    color:#EAA228; 
+}
+
+
+/* jquery-ui tab tweaking */
+.ui-tabs {
+    padding: 0;
+    /* this is to keep jquery ui from expanding the flight details div */
+}
+
+.ui-tabs-nav { 
+    float: right; 
+    border-left: none; 
+    -moz-border-radius: 0px 6px 6px 0px; 
+    -webkit-border-radius: 0px 6px 6px 0px; 
+    border-radius: 0px 6px 6px 0px; 
+} 
+.tabs-background { 
+    height: 1.8em; 
+}
+.ui-tabs-nav li a{
+    padding: 0.1em 0.2em;
+}
