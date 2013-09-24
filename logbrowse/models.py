@@ -12,7 +12,7 @@
    #See the License for the specific language governing permissions and
    #limitations under the License.
 
-import datetime, calendar, scipy, flyingrhino, pdb, pandas
+import datetime, calendar, scipy, flyingrhino, pandas
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -243,6 +243,9 @@ class Flight(models.Model):
         else:
             self.read_tlog()
             pass
+        #Do automatic processing
+        self.detectTakeoffs()
+        self.detectLandings()
 
     def read_tlog(self):
         mlog = mavutil.mavlink_connection(self.logfile.name)
