@@ -136,7 +136,7 @@ def flightIndex(request, pilot=None):
             timelineEventList.append(
                 {"start":flight.startTime.isoformat(),
                 "end":flight.startTime.isoformat(),
-                "content":"<a href=%s logpk=%s>%s</a>" % (flight.get_absolute_url(), flight.id, flight.id),
+                "content":"<a href=%s logpk=%s>%s</a>" % (flight.get_absolute_url(), flight.pk, flight.pk),
                 "group":"flight",
                 "test":"test"
                 })
