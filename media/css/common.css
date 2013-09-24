@@ -35,7 +35,7 @@ h2 {
     height: 100%;
 }
 
-.upload_form, .http_error {
+.upload_form, .http_error, .about {
     padding: 1em 1.4em;
 }
 

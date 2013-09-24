@@ -276,7 +276,7 @@ class Flight(models.Model):
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
     #In seconds
-    delayVsLogstart=models.FloatField(blank=True, null=True)
+    delayVsLogstart=models.FloatField(default=0)
     onboard=models.BooleanField(blank=True, default=True)
     url=models.URLField(blank=True, null=True)
     videoFile=models.FileField(blank=True, null=True, upload_to='video')
