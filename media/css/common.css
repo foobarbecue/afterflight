@@ -38,3 +38,14 @@ h2 {
 .upload_form, .http_error {
     padding: 1em 1.4em;
 }
+
+.olControlAttribution {
+	bottom: 0;
+	left: 0;
+}
+
+.olControlScaleLine {
+	left: auto;
+	right: 10px;
+	bottom: 10px;
+}
