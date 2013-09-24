@@ -29,15 +29,16 @@ from django.http import HttpResponse
 from django.views.generic.edit import CreateView
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
+from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from logbrowse import importLog
-import calendar, datetime
+import calendar, datetime, pdb
 from af_utils import dt2jsts
 # Create your views here.
 
 class FlightCreate(CreateView):
     model = Flight
-    fields = ('comments','logfile')
+    fields = ('logfile','comments')
     
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -50,8 +51,26 @@ class FlightCreate(CreateView):
         form.instance.slug = form.instance.logfile.name       
         return super(FlightCreate, self).form_valid(form)
 
+class VideoForm(ModelForm):
+    class Meta:
+        model = FlightVideo
+        exclude = ('created_by',)
+
 class VideoCreate(CreateView):
+    form_class = VideoForm
+    #seems like you shouldn't have to specify this a second time.
+    #See https://docs.djangoproject.com/en/1.5/topics/class-based-views/generic-editing/#models-and-request-user
     model = FlightVideo
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(VideoCreate, self).dispatch(*args, **kwargs)
+
+    def form_valid(self, form):
+        if form.instance.flight.pilot == self.request.user:
+            return super(VideoCreate, self).form_valid(form)
+        else:
+            raise PermissionDenied
 
 def flightDetail(request, slug):
     print 'loading' + slug

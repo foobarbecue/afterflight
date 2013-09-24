@@ -379,8 +379,16 @@ function addVideoToTimeline() {
     
     {% for video in object.flightvideo_set.all %}
         <div id="vidPlayer{{video.id}}"></div>
+    {% empty %}
+    	<p>No videos for this flight yet.
+    	{% ifequal user object.pilot %}
+    		<a href= {% url 'video_create' %} >Connect a youtube video to this flight.</a>
+    	{% else %}
+    		Log in as the creator of the flight to add one. 
+    	{% endifequal %} 
+    	</p> 
+
     {% endfor %}
-    
 </div>
 <div id="plotContainer">
     <h2>Sensor data</h2>
