@@ -235,7 +235,7 @@ class Flight(models.Model):
             logfile_path=self.logfile.name
         if not self.is_tlog:
             #flyingrhino can't do tlogs yet. We assume it's a dataflash log if it's not a tlog.
-            fr_flight=flyingrhino.flight(logfile_path)
+            fr_flight=flyingrhino.flight(settings.MEDIA_ROOT + logfile_path)
             cursor=dbconn.cursor()
             transaction.enter_transaction_management()
             fr_flight.to_afterflight_sql(dbconn=dbconn.connection,close_when_done=False)
@@ -283,7 +283,10 @@ class FlightVideo(models.Model):
     
     @property
     def startTime(self):
-        return self.flight.startTime+datetime.timedelta(seconds=self.delayVsLogstart)
+        if self.delayVsLogstart:
+            return self.flight.startTime+datetime.timedelta(seconds=self.delayVsLogstart)
+        else:
+            return None
     #For youtube videos, we don't store the endtime. Instead, get it from javascript at runtime.
     
     @property

@@ -52,6 +52,12 @@ class FlightCreate(CreateView):
         return super(FlightCreate, self).form_valid(form)
 
 class VideoForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        #have to get rid of the user because super doesn't expect it
+        user = kwargs.pop('current_user')
+        super(VideoForm, self).__init__(*args, **kwargs)
+        self.fields['flight'].queryset=Flight.objects.filter(pilot=user)
+    
     class Meta:
         model = FlightVideo
         exclude = ('created_by',)
@@ -67,10 +73,17 @@ class VideoCreate(CreateView):
         return super(VideoCreate, self).dispatch(*args, **kwargs)
 
     def form_valid(self, form):
+        #Make sure the user is not trying to attach a video to someone else's flight
         if form.instance.flight.pilot == self.request.user:
             return super(VideoCreate, self).form_valid(form)
         else:
             raise PermissionDenied
+    
+    #The purpose of this is to pass the user to the ModelForm and filter the flight choices by user
+    def get_form_kwargs(self):
+        kwargs = super(VideoCreate, self).get_form_kwargs()
+        kwargs.update({'current_user': self.request.user})
+        return kwargs        
 
 def flightDetail(request, slug):
     print 'loading' + slug
