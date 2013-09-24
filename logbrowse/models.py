@@ -12,14 +12,14 @@
    #See the License for the specific language governing permissions and
    #limitations under the License.
 
-import datetime, calendar, scipy, flyingrhino, pdb
+import datetime, calendar, scipy, flyingrhino, pdb, pandas
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.db import connection as dbconn
 from django.db import transaction
-from af_utils import dt2jsts, utc
+from af_utils import dt2jsts, utc, cross
 from pymavlink import mavutil
 # Create your models here.
 
@@ -75,6 +75,11 @@ class Flight(models.Model):
         dataQ=MavDatum.objects.filter(message__flight=self, msgField=msg_field)
         vals=dataQ.values_list('message__timestamp','value')
         return ','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in vals])
+    
+    def sensor_plot_pandas(self, msg_field):
+        thrindex=MavDatum.objects.filter(msgField='ThrIn').values_list('message_id',flat=True)
+        thr=MavDatum.objects.filter(msgField='ThrIn').values_list('value',flat=True)
+        return pandas.Series(thr, index=thrindex)
     
     @property
     def is_tlog(self):
@@ -175,6 +180,20 @@ class Flight(models.Model):
             msgTypeCounts[x]=self.mavmessage_set.filter(msgType=msgType).count()
             x+=1
         return zip(self.messageTypesRecorded, msgTypeCounts)
+    
+    def detectTakeoffs(self):
+        #Only for dflog now
+        takeoffs=cross(self.sensor_plot_pandas('ThrIn'), cross=300, direction='rising')
+        for takeoffTime in takeoffs:
+            newFE=FlightEvent(flight=self, eventType='LANDING', automatically_detected=True, timestamp=takeoffTime.astype(str))
+            newFE.save()        
+
+    def detectLandings(self):
+        #Only for dflog now
+        landings=cross(self.sensor_plot_pandas('ThrIn'), cross=300, direction='falling')
+        for landingTime in landings:
+            newFE=FlightEvent(flight=self, eventType='LANDING', automatically_detected=True, timestamp=landingTime.astype(str))
+            newFE.save()
     
     def throttleData(self):
         pass
