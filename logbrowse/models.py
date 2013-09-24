@@ -181,18 +181,28 @@ class Flight(models.Model):
             x+=1
         return zip(self.messageTypesRecorded, msgTypeCounts)
     
-    def detectTakeoffs(self):
+    def detectTakeoffs(self, thr_threshold=300):
         #Only for dflog now
-        takeoffs=cross(self.sensor_plot_pandas('ThrIn'), cross=300, direction='rising')
+        takeoffs=cross(self.sensor_plot_pandas('ThrIn'), cross=thr_threshold, direction='rising')
         for takeoffTime in takeoffs:
-            newFE=FlightEvent(flight=self, eventType='LANDING', automatically_detected=True, timestamp=takeoffTime.astype(str))
+            newFE=FlightEvent(flight=self,
+                              eventType='TAKEOFF',
+                              automatically_detected=True,
+                              timestamp=takeoffTime.astype(str),
+                              comments='Throttle crossing %s detected' % thr_threshold
+                              )
             newFE.save()        
 
-    def detectLandings(self):
+    def detectLandings(self, thr_threshold=300):
         #Only for dflog now
-        landings=cross(self.sensor_plot_pandas('ThrIn'), cross=300, direction='falling')
+        landings=cross(self.sensor_plot_pandas('ThrIn'), cross=thr_threshold, direction='falling')
         for landingTime in landings:
-            newFE=FlightEvent(flight=self, eventType='LANDING', automatically_detected=True, timestamp=landingTime.astype(str))
+            newFE=FlightEvent(flight=self,
+                              eventType='LANDING',
+                              automatically_detected=True, 
+                              timestamp=landingTime.astype(str),
+                              comments='Throttle crossing 300 detected' % thr_threshold
+                              )
             newFE.save()
     
     def throttleData(self):
