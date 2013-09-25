@@ -117,7 +117,7 @@ def flightDetail(request, slug):
 
     for evt in flight.flightevent_set.all():
         print evt
-        timelineDictForEvt={"start":dt2jsts(evt.timestamp), "content":evt.get_eventType_display() + evt.comment}
+        timelineDictForEvt={"start":dt2jsts(evt.timestamp), "content":evt.get_eventType_display(), "comment":evt.comment}
         if evt.automatically_detected:
             timelineDictForEvt['group']='Flight events'
         else:
