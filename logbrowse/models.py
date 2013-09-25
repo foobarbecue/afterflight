@@ -201,7 +201,7 @@ class Flight(models.Model):
                               eventType='LANDING',
                               automatically_detected=True, 
                               timestamp=landingTime.astype(str),
-                              comment='Throttle crossing 300 detected' % thr_threshold
+                              comment='Throttle crossing %s detected' % thr_threshold
                               )
             newFE.save()
     
