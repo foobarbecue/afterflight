@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block nav-status %}Uploading new video{% endblock %}
+{% block content %}
+<form action="/add_video" method="post" enctype="multipart/form-data" class="upload_form"> 
+    {% csrf_token %}    
+    {{ form.as_p }}
+    <input type="submit" value = "Upload"/>
+</form>
+{% endblock content %}

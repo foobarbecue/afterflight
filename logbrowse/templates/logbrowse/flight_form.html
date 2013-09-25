@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block nav-status %}Uploading new flight log{% endblock %}
+{% block content %}
+<form action="/upload" method="post" enctype="multipart/form-data" class="upload_form"> 
+    {% csrf_token %}
+    Note: Afterflight currently only supports:
+    <ul>
+    <li>Dataflash logs in the new format</li>
+    <li>mavlink telemetry logs as produced by Mission Planner</li>
+    </ul>     
+    Dataflash support is much better than mavlink log support at the moment.
+    {{ form.as_p }}
+    <input type="submit" value = "Upload"/>
+</form>
+{% endblock content %}
