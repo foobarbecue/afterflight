@@ -36,9 +36,15 @@ import calendar, datetime, pdb
 from af_utils import dt2jsts
 # Create your views here.
 
+
+class FlightForm(ModelForm):
+    class Meta:
+        fields = ('logfile','comments')
+        model = Flight        
+
 class FlightCreate(CreateView):
     model = Flight
-    fields = ('logfile','comments')
+    form_class = FlightForm
     
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
