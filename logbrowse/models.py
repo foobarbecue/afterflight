@@ -232,10 +232,10 @@ class Flight(models.Model):
     
     def read_log(self, logfile_path=None):
         if not logfile_path:
-            logfile_path=self.logfile.name
+            logfile_path=self.logfile.path
         if not self.is_tlog:
             #flyingrhino can't do tlogs yet. We assume it's a dataflash log if it's not a tlog.
-            fr_flight=flyingrhino.flight(settings.MEDIA_ROOT + logfile_path)
+            fr_flight=flyingrhino.flight(logfile_path)
             cursor=dbconn.cursor()
             transaction.enter_transaction_management()
             fr_flight.to_afterflight_sql(dbconn=dbconn.connection,close_when_done=False)
@@ -248,7 +248,7 @@ class Flight(models.Model):
         self.detectLandings()
 
     def read_tlog(self):
-        mlog = mavutil.mavlink_connection(self.logfile.name)
+        mlog = mavutil.mavlink_connection(self.logfile.path)
         mavData=[]
         mavMessages=[]
         while True:

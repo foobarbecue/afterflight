@@ -218,7 +218,7 @@ def flightIndex(request, pilot=None):
     return render(request,
         'flight_list.html',
         {
-        'object_list':Flight.objects.all(),
+        'object_list':flights,
         'timeline_data': json.dumps(timelineEventList),
         'flightStartLocs': json.dumps(flightStartLocsJSON)
         })

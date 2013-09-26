@@ -382,7 +382,7 @@ function addVideoToTimeline() {
     	{% ifequal user object.pilot %}
     		<a href= {% url 'video_create' %} >Connect a youtube video to this flight.</a>
     	{% else %}
-    		Log in as the creator of the flight to add one. 
+    		Log in as the creator of the flight, {{object.pilot}} to add one (you are logged in as {{request.user}}). 
     	{% endifequal %} 
     	</p> 
 
