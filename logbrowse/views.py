@@ -45,10 +45,9 @@ class FlightForm(ModelForm):
 class FlightCreate(CreateView):
     model = Flight
     form_class = FlightForm
-    
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
-        return super(FlightCreate, self).dispatch(*args, **kwargs)    
+        return super(FlightCreate, self).dispatch(*args, **kwargs)
     
     def form_valid(self, form):
         form.instance.pilot = self.request.user
@@ -91,6 +90,15 @@ class VideoCreate(CreateView):
         kwargs.update({'current_user': self.request.user})
         return kwargs        
 
+def changeVidStartTime(request, vid_id):
+    vid = get_object_or_404(FlightVideo, pk=vid_id)
+    try:
+        vid.delayVsLogstart = request.POST['delayVsLogstart']
+        vid.save()
+        return HttpResponseRedirect(vid.flight.get_absolute_url())
+    except:
+        return HttpResponseBadRequest('Invalid input for delayVsLogstart')
+
 def flightDetail(request, slug):
     print 'loading' + slug
     flight=Flight.objects.get(slug=slug)
@@ -108,11 +116,11 @@ def flightDetail(request, slug):
             pass
     for video in flight.flightvideo_set.all():
         startTime=dt2jsts(flight.startTime+datetime.timedelta(seconds=video.delayVsLogstart))
-        timelineDictForVid={"start":startTime,"group":"Video"}
+        timelineDictForVid={"start":startTime,"group":"Video","editable":True}
         if video.onboard:
-            timelineDictForVid['content']='Onboard video start'
+            timelineDictForVid['content']='Start of onboard video ' + video.url
         else:
-            timelineDictForVid['content']='Offboard video start'
+            timelineDictForVid['content']='Start of offboard video ' + video.url 
         timelineEventList.append(timelineDictForVid)
 
     for evt in flight.flightevent_set.all():

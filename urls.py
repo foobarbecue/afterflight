@@ -31,7 +31,7 @@ urlpatterns = patterns('',
 
     #url(r'^flight/(?P<slug>.+)/$',object_detail,{'queryset':Flight.objects.all()}, name='flights'),
     url(r'^flight/(?P<slug>.+)/$',flightDetail, name='flights'),
-    url(r'^pilot/(?P<pilot>.+)/$',flightIndex, name='flights'),
+    url(r'^pilot/(?P<pilot>.+)/$',flightIndex, name='flightsForPilot'),
     url(r'^data$',plotDataJSON, name='flights'),
     url(r'^/?$',flightIndex, name='timeline'),
     url(r'^admin/', include(admin.site.urls)),
@@ -39,6 +39,7 @@ urlpatterns = patterns('',
     url(r'^about', TemplateView.as_view(template_name='about.html')),
     url(r'^upload', FlightCreate.as_view(), name='flight_create'),
     url(r'^add_video', VideoCreate.as_view(), name='video_create'),
+    url(r'^progressbarupload/', include('progressbarupload.urls')),
     (r'^accounts/', include('allauth.urls')),
 )
 
