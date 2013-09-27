@@ -16,6 +16,7 @@ import datetime, calendar, scipy, flyingrhino, pandas
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.core.cache import cache
 from django.conf import settings
 from django.db import connection as dbconn
 from django.db import transaction
@@ -255,10 +256,14 @@ class Flight(models.Model):
             m=mlog.recv_msg()
             if not m:
                 break
-            if 'PARAM' in m._type:
+            if 'PARAM' in m.get_type():
                 continue
-            timestamp=datetime.datetime.fromtimestamp(m._timestamp, utc)
-            mavMessages.append(MavMessage(msgType=m._type, timestamp=timestamp, flight=self))
+            try:
+                timestamp=datetime.datetime.fromtimestamp(m._timestamp, utc)
+            except: 
+                print "bad timestamp on %s " % m
+                break
+            mavMessages.append(MavMessage(msgType=m.get_type(), timestamp=timestamp, flight=self))
             m=m.to_dict()
             for key, item in m.items():
                 if key!='mavpackettype':
@@ -270,8 +275,11 @@ class Flight(models.Model):
                     newDatum=MavDatum(msgField=key,value=value,message_id=timestamp)
                     mavData.append(newDatum)
         #Can't get bulk_create to work here because you end up with blank message_id s on the mavData TODO
+        print 'creating messages'
         MavMessage.objects.bulk_create(mavMessages)
+        print 'creating data'
         MavDatum.objects.bulk_create(mavData)
+        print 'done'
     
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
