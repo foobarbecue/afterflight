@@ -40,6 +40,7 @@ urlpatterns = patterns('',
     url(r'^upload_progress$', upload_progress, name="upload_progress"),
     url(r'^upload', FlightCreate.as_view(), name='flight_create'),
     url(r'^add_video', VideoCreate.as_view(), name='video_create'),
+    url(r'^edit_fe', edit_flightevent, name='edit_flightevent'),
     (r'^accounts/', include('allauth.urls')),
 )
 

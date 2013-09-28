@@ -20,16 +20,17 @@ except:
     from django.utils import simplejson as json
 
 
-from models import Flight, FlightVideo, MavDatum
+from models import Flight, FlightVideo, MavDatum, FlightEvent
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.generic.edit import CreateView
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.core.exceptions import PermissionDenied
+from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import datetime, fltdata
 from af_utils import dt2jsts
@@ -142,16 +143,43 @@ def flightDetail(request, slug):
     for evt in flight.flightevent_set.all():
         print evt
         timelineDictForEvt={"start":dt2jsts(evt.timestamp), "content":evt.get_eventType_display(), "comment":evt.comment}
+        timelineDictForEvt['group']='Flight events'
+        timelineDictForEvt['pk']=evt.pk
+        #timelineDictForEvt['detectionMethod']=evt.detection_method
+        
+        #Text that explains how the event was created and link to confirm it if it was automatic
         if evt.automatically_detected:
-            timelineDictForEvt['group']='Flight events'
+            timelineDictForEvt['className']='autodetected'
+            timelineDictForEvt['confirmed']='false'
         else:
-            timelineDictForEvt['group']='Annotations'
+            timelineDictForEvt['confirmed']='true'
         timelineEventList.append(timelineDictForEvt)
 
     return render(request, 'flight_detail.html',{
         'timeline_data':json.dumps(timelineEventList),
         'initial_plot':fltdata.initial_plot(flight),
         'object':flight})
+
+@csrf_exempt
+def edit_flightevent(request):
+    #TODO check it's actually POST etc
+    pk=request.POST.get('pk')
+    action=request.POST.get('action')
+    print "entered confirm fe"
+    flightevent=FlightEvent.objects.get(pk=pk)
+    if request.user == flightevent.flight.pilot:
+        if action == 'confirm':
+            flightevent.confirm()
+            return HttpResponse('confirmed')
+        elif action == 'unconfirm':
+            flightevent.unconfirm() 
+            return HttpResponse('unconfirmed')
+        elif action == 'delete':
+            flightevent.delete() 
+            return HttpResponse('deleted')
+
+    else:
+        return HttpResponseForbidden('This user does not own this FlightEvent')
 
 def plotDataJSON(request):
     right_axis_msgfield=request.GET.get('right_axis')

@@ -181,6 +181,7 @@ function drawTimeline() {
     }
     //Register an event to seek all widgets when the customtime bar is dragged
     links.events.addListener(timeline, 'timechange', onTimelineBarDragged)
+    links.events.addListener(timeline, 'select', onTimelineItemSelected)
 };
 
 addTimelineEvent= function() {
@@ -191,6 +192,7 @@ addTimelineEvent= function() {
         'start': start,
         'content': content,
         'group': 'annotations',
+        'editable': 'true'
     });
     return false;
 };
@@ -251,6 +253,58 @@ function seekTimelineTo(seekTime) {
 
 function onTimelineBarDragged() {
     seekWidgetsTo(timeline.customTime)
+}
+
+function onTimelineItemSelected(){
+//	Todo: enable deletes and unconfirms
+	evtData=timeline.data[timeline.selection.index]
+	domItem=timeline.selection.item
+	if (evtData.group == "Flight events"){
+		contextText = 'Event #' + evtData.pk + ' (' + evtData.content + ')'
+		contextText = '<form>' + contextText
+	
+		contextText += '<input type="hidden" name="pk" value='
+		contextText += evtData.pk
+		contextText += '></input>'
+		//figure out how to send this as a boolean instead of string 
+		if (evtData.confirmed=='true'){
+			contextText += '<input type="hidden" name="action" value="unconfirm"></input>'
+			contextText += '<input type="submit" value="Unconfirm this event"></submit>'
+		}
+		else{
+			contextText += '<input type="hidden" name="action" value="confirm"></input>'
+			contextText += '<input type="submit" value="Confirm this autodetected event"></submit>'
+		}
+		contextText += '</form>'
+	
+		$('#timelineEvtInfo').html(contextText)
+		$('#timelineEvtInfo form').submit(editSelectedFlightEvent)
+		}
+	}
+
+editSelectedFlightEvent = function(){
+	evtData=timeline.data[timeline.selection.index]
+	evtDomItem=timeline.selection.item
+    $.ajax({
+        type:'POST',
+        url: '{% url 'edit_flightevent' %}',
+        data:$('#timelineEvtInfo form').serialize(),
+        }).done(function (resp) {
+			if (resp == 'confirmed'){
+				evtData.confirmed=true
+				$(domItem).children('.timeline-event').removeClass('autodetected')
+				// This is just to trigger onTimelineItemSelected again so that the submit button changes
+				timeline.setSelection(timeline.getSelection())
+			}
+			else if (resp == 'unconfirmed'){
+				$(domItem).children('.timeline-event').addClass('autodetected')
+				timeline.setSelection(timeline.getSelection())
+			}
+			else if (resp == 'deleted'){
+				$(domItem).remove()
+			}
+        })
+    return false
 }
 
 {% for video in object.flightvideo_set.all %}
@@ -419,6 +473,7 @@ function addVideoToTimeline() {
         <input type="text" value="Annotation text" id="annotationText"></input>
         <input type="submit" value="Add annotation at blue time bar"></submit>
         <input type="submit" value="Save annotations"></submit>
+        <div id="timelineEvtInfo"></div>
         </form>
     </div>
     <div id="timeline">Timeline loading...</div>

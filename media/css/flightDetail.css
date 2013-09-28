@@ -79,3 +79,11 @@
 .ui-tabs-nav li a{
     padding: 0.1em 0.2em;
 }
+
+.timeline-event.timeline-event-dot.autodetected {
+	border-color: grey;
+}
+
+#timelineEvtInfo{
+	float: right;	
+}

@@ -122,6 +122,7 @@ class Flight(models.Model):
             newFE=FlightEvent(flight=self,
                               eventType='TAKEOFF',
                               automatically_detected=True,
+                              detection_method='crossing %s' % 300,
                               timestamp=takeoffTime.astype(str),
                               comment='Throttle crossing %s detected' % thr_threshold
                               )
@@ -134,6 +135,7 @@ class Flight(models.Model):
             newFE=FlightEvent(flight=self,
                               eventType='LANDING',
                               automatically_detected=True, 
+                              detection_method='crossing %s' % 300,
                               timestamp=landingTime.astype(str),
                               comment='Throttle crossing %s detected' % thr_threshold
                               )
@@ -305,4 +307,14 @@ class FlightEvent(models.Model):
     comment=models.TextField()
     automatically_detected=models.BooleanField(default=False)
     timestamp=models.DateTimeField()
+    #detection_method=models.CharField(blank=True, null=True, max_length=200)
     
+    def confirm(self):
+        """Human-verify this event after automatic detection"""
+        self.automatically_detected=False
+        self.save()
+    
+    def unconfirm(self):
+        """Human-verify this event after automatic detection"""
+        self.automatically_detected=True
+        self.save()
