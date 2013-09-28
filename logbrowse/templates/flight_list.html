@@ -28,8 +28,8 @@ var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
     {% for flight in object_list %}
         <tr logpk="{{flight.pk}}" onclick="document.location = '/flight/{{flight.slug}}';">
             <td>{{flight.pk}}</td>
-            <td>{{flight.startTime}}</td>
-            <td>{% if flight.length %}{{flight.lengthStr}}{% endif %}</td>
+            <td>{{flight.start_time}}</td>
+            <td>{{flight.length_str}}</td>
             <td>{{flight.comments|truncatewords:10}}</td>
             <td>{{flight.slug}}</td>
             <td>{{flight.pilot}}</td>

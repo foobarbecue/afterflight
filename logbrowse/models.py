@@ -85,36 +85,21 @@ class Flight(models.Model):
     def lat_lons_JSON(self):
         return fltdata.lat_lons_JSON(self)
     
-    @property
     def gps_times(self):
-        return fltdata.gps_times()
+        return fltdata.gps_times(self)
     
-    @property
+    
     def start_time(self):
-        #if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
-        try:
-            return self.mavmessage_set.exclude(msgType='BAD_DATA').order_by('timestamp')[0].timestamp
-        except IndexError:
-            pass
+        return fltdata.start_time(self)
     
-    @property
     def end_time(self):
-        #if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
-        try:
-            return self.mavmessage_set.exclude(msgType='BAD_DATA').latest('timestamp').timestamp
-        except IndexError:
-            pass
+        return fltdata.end_time(self)
     
-    @property
     def gps_timestamps(self):
         return fltdata.gps_timestamps(self)
-           
-    @property
-    def length(self):
-        return (self.end_time - self.start_time)
-    
-    def lengthStr(self):
-        return str(self.length)[:7]
+
+    def length_str(self):
+        return fltdata.length_str(self)
 
     def message_fields_recorded(self):
         return fltdata.message_fields_recorded(self)
