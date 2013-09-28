@@ -33,8 +33,24 @@ from django.core.exceptions import PermissionDenied
 from django.conf import settings
 import datetime, fltdata
 from af_utils import dt2jsts
+from django.core.cache import cache
 # Create your views here.
 
+def upload_progress(request):
+    """
+    AJAX view adapted from django-progressbarupload
+
+    Return the upload progress and total length values
+    """
+    if 'logfilename' in request.GET:
+        logfilename = request.GET['logfilename']
+    elif 'logfilename' in request.META:
+        logfilename = request.META['logfilename']
+    if logfilename:
+        cache_key = logfilename.replace(' ','_')
+        print 'looking up %s' % cache_key
+        data = cache.get(cache_key)
+        return HttpResponse(json.dumps(data))
 
 class FlightForm(ModelForm):
     class Meta:
@@ -50,9 +66,10 @@ class FlightCreate(CreateView):
     
     def form_valid(self, form):
         form.instance.pilot = self.request.user
+        form.instance.orig_logfile_name = form.instance.logfile.name
         form.instance.logfile.name = slugify(form.instance.logfile.name.split('/')[-1])
         #TODO: take out the slugfield entirely? It's the same as logfile.name...
-        form.instance.slug = form.instance.logfile.name       
+        form.instance.slug = form.instance.logfile.name
         return super(FlightCreate, self).form_valid(form)
 
 class VideoForm(ModelForm):

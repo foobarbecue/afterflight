@@ -37,9 +37,9 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     #url(r'^about/', direct_to_template, {'template':'about.html'}),
     url(r'^about', TemplateView.as_view(template_name='about.html')),
+    url(r'^upload_progress$', upload_progress, name="upload_progress"),
     url(r'^upload', FlightCreate.as_view(), name='flight_create'),
     url(r'^add_video', VideoCreate.as_view(), name='video_create'),
-    url(r'^progressbarupload/', include('progressbarupload.urls')),
     (r'^accounts/', include('allauth.urls')),
 )
 

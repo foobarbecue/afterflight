@@ -22,6 +22,7 @@ from django.db import transaction
 from af_utils import dt2jsts, utc, cross
 from pymavlink import mavutil
 from cacheops import cached
+from django.core.cache import cache
 # Create your models here.
 
 MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
@@ -54,7 +55,11 @@ class Flight(models.Model):
     video=models.URLField(blank=True, null=True)
     battery=models.ForeignKey('Battery',blank=True, null=True, )
     airframe=models.ForeignKey('Airframe', blank=True, null=True)
+    orig_logfile_name=models.TextField(blank=True, null=True)
     slug=models.SlugField(primary_key=True)
+    
+    def initial_plot(self):
+        return fltdata.initial_plot(self)
     
     def sensor_plot_data(self, msg_field):
         return fltdata.sensor_plot_data(self, msg_field)
@@ -158,10 +163,12 @@ class Flight(models.Model):
         if not self.is_tlog:
             #flyingrhino can't do tlogs yet. We assume it's a dataflash log if it's not a tlog.
             fr_flight=flyingrhino.flight(logfile_path)
+            self.set_processing_state('Dataflash log loaded into memory, inserting into database')
             cursor=dbconn.cursor()
             transaction.enter_transaction_management()
             fr_flight.to_afterflight_sql(dbconn=dbconn.connection,close_when_done=False)
             transaction.commit()
+            self.set_processing_state('Dataflash log inserted into database')
         else:
             self.read_tlog()
             pass
@@ -195,13 +202,25 @@ class Flight(models.Model):
                         continue
                     newDatum=MavDatum(msgField=key,value=value,message_id=timestamp)
                     mavData.append(newDatum)
-        #Can't get bulk_create to work here because you end up with blank message_id s on the mavData TODO
-        print 'creating messages'
+        self.set_processing_state('Inserting telemetry log messages into database')
         MavMessage.objects.bulk_create(mavMessages)
-        print 'creating data'
+        self.processing_state('Inserting telemetry log data into database')
         MavDatum.objects.bulk_create(mavData)
-        print 'done'
+        self.set_processing_state('Finished inserting telemetry log data into database')
     
+    def set_processing_state(self, processing_state):
+        print processing_state
+        self.progress_cache_key = self.orig_logfile_name.replace(' ','_')
+        cache.set(self.progress_cache_key, {
+            'length': 100,
+            'uploaded': 50,
+            'message': processing_state
+        })
+        return self.progress_cache_key
+
+    def get_processing_state(self):
+        return cache.get(self.orig_logfile_name.replace(' ','_'))
+
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
     #In seconds
