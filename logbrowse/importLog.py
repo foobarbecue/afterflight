@@ -20,9 +20,7 @@ todo: get_or_creates should be checking MAV id
 import sys, os, re
 from datetime import datetime, timedelta
 from django.conf import settings
-# allow import from where mavlink.py is
-sys.path.append(settings.PYMAVLINK_PATH)
-import mavutil
+from pymavlink import mavutil
 import xml.etree.ElementTree as et
 from logbrowse.models import Flight, MavMessage, MavDatum, FlightEvent
 from django.contrib.auth.models import User
@@ -43,7 +41,7 @@ def readInDfLog(filepath, startdate=None, **kwargs):
         startdate=datetime.strptime(filepath.split('/')[-1][:10],'%Y-%m-%d')
     readInDfLogOldFormat(filepath=filepath, startdate=startdate, xml_format_file='dataflashlog.xml', **kwargs)
 
-def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml', **kwargs):
+def readInDfLogOldFormat(filepath, startdate, xml_format_file='dataflashlog.xml', gpstime=True, **kwargs):
     #Read in the dataflash log format and put it in a dictionary df_msg_types
     with open(xml_format_file,'r') as df_log_format_file:
         df_log_xml=et.parse(df_log_format_file).getroot()

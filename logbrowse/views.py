@@ -1,16 +1,16 @@
-   #Copyright 2013 Aaron Curtis
-
-   #Licensed under the Apache License, Version 2.0 (the "License");
-   #you may not use this file except in compliance with the License.
-   #You may obtain a copy of the License at
-
-       #http://www.apache.org/licenses/LICENSE-2.0
-
-   #Unless required by applicable law or agreed to in writing, software
-   #distributed under the License is distributed on an "AS IS" BASIS,
-   #WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   #See the License for the specific language governing permissions and
-   #limitations under the License.
+    #Copyright 2013 Aaron Curtis
+    
+    #Licensed under the Apache License, Version 2.0 (the "License");
+    #you may not use this file except in compliance with the License.
+    #You may obtain a copy of the License at
+    
+        #http://www.apache.org/licenses/LICENSE-2.0
+    
+    #Unless required by applicable law or agreed to in writing, software
+    #distributed under the License is distributed on an "AS IS" BASIS,
+    #WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #See the License for the specific language governing permissions and
+    #limitations under the License.
 
 try:
     import ujson as json
@@ -24,15 +24,14 @@ from models import Flight, FlightVideo, MavDatum
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.generic.edit import CreateView
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
-from logbrowse import importLog
-import calendar, datetime, pdb
+import datetime, fltdata
 from af_utils import dt2jsts
 # Create your views here.
 
@@ -115,8 +114,8 @@ def flightDetail(request, slug):
         except AttributeError:
             pass
     for video in flight.flightvideo_set.all():
-        startTime=dt2jsts(flight.startTime+datetime.timedelta(seconds=video.delayVsLogstart))
-        timelineDictForVid={"start":startTime,"group":"Video","editable":True}
+        start_time=dt2jsts(flight.start_time+datetime.timedelta(seconds=video.delayVsLogstart))
+        timelineDictForVid={"start":start_time,"group":"Video","editable":True}
         if video.onboard:
             timelineDictForVid['content']='Start of onboard video ' + video.url
         else:
@@ -134,7 +133,7 @@ def flightDetail(request, slug):
 
     return render(request, 'flight_detail.html',{
         'timeline_data':json.dumps(timelineEventList),
-        'initial_plot':flight.initial_plot(),
+        'initial_plot':fltdata.initial_plot(flight),
         'object':flight})
 
 def plotDataJSON(request):
@@ -147,7 +146,6 @@ def plotDataJSON(request):
     
     ldataQuery=MavDatum.objects.filter(message__flight__slug=flight, msgField=left_axis_msgfield)
     left_axis_data=ldataQuery.values_list('message__timestamp','value')
-    
     right_axis_data= '['+','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in right_axis_data])+']'
     left_axis_data= '['+','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in left_axis_data])+']'
     data='[%s,%s]' % (right_axis_data,left_axis_data)
@@ -180,8 +178,8 @@ def flightIndex(request, pilot=None):
         #optimize this later-- should be single db transaction
         try:
             timelineEventList.append(
-                {"start":flight.startTime.isoformat(),
-                "end":flight.startTime.isoformat(),
+                {"start":flight.start_time.isoformat(),
+                "end":flight.start_time.isoformat(),
                 "content":"<a href=%s logpk=%s>%s</a>" % (flight.get_absolute_url(), flight.pk, flight.pk),
                 "group":"flight",
                 "test":"test"
@@ -217,7 +215,7 @@ def flightIndex(request, pilot=None):
         vidDescription+="</a>"
         try:
             timelineEventList.append(
-                {"start":dt2jsts(video.startTime),
+                {"start":dt2jsts(video.start_time),
                 "content":vidDescription,
                 "group":"video"})
         except AttributeError:
@@ -230,4 +228,3 @@ def flightIndex(request, pilot=None):
         'timeline_data': json.dumps(timelineEventList),
         'flightStartLocs': json.dumps(flightStartLocsJSON)
         })
-        

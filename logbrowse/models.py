@@ -1,27 +1,27 @@
-   #Copyright 2013 Aaron Curtis
-
-   #Licensed under the Apache License, Version 2.0 (the "License");
-   #you may not use this file except in compliance with the License.
-   #You may obtain a copy of the License at
-
-       #http://www.apache.org/licenses/LICENSE-2.0
-
-   #Unless required by applicable law or agreed to in writing, software
-   #distributed under the License is distributed on an "AS IS" BASIS,
-   #WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   #See the License for the specific language governing permissions and
-   #limitations under the License.
+    #Copyright 2013 Aaron Curtis
+    
+    #Licensed under the Apache License, Version 2.0 (the "License");
+    #you may not use this file except in compliance with the License.
+    #You may obtain a copy of the License at
+    
+        #http://www.apache.org/licenses/LICENSE-2.0
+    
+    #Unless required by applicable law or agreed to in writing, software
+    #distributed under the License is distributed on an "AS IS" BASIS,
+    #WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #See the License for the specific language governing permissions and
+    #limitations under the License.
 
 import datetime, calendar, scipy, flyingrhino, pandas
+from logbrowse import fltdata
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.core.cache import cache
-from django.conf import settings
 from django.db import connection as dbconn
 from django.db import transaction
 from af_utils import dt2jsts, utc, cross
 from pymavlink import mavutil
+from cacheops import cached
 # Create your models here.
 
 MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
@@ -55,59 +55,16 @@ class Flight(models.Model):
     battery=models.ForeignKey('Battery',blank=True, null=True, )
     airframe=models.ForeignKey('Airframe', blank=True, null=True)
     slug=models.SlugField(primary_key=True)
-
-    def thrData(self):
-        vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='throttle')
-        vltVals=vltDataQ.values_list('message__timestamp','value')
-        return vltVals
-
-    def thrDataFlot(self):
-        return ','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in self.thrData()])
-        
-    def battVltsData(self):
-        vltDataQ=MavDatum.objects.filter(message__flight=self, msgField='voltage_battery')
-        vltVals=vltDataQ.values_list('message__timestamp','value')
-        return vltVals
-
-    def battVltsDataFlot(self):
-        return ','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in self.battVltsData()])
     
     def sensor_plot_data(self, msg_field):
-        dataQ=MavDatum.objects.filter(message__flight=self, msgField=msg_field)
-        vals=dataQ.values_list('message__timestamp','value')
-        return ','.join([r'[%.1f,%.1f]' % (dt2jsts(timestamp),value) for timestamp, value in vals])
+        return fltdata.sensor_plot_data(self, msg_field)
     
     def sensor_plot_pandas(self, msg_field):
-        thrindex=MavDatum.objects.filter(msgField='ThrIn').values_list('message_id',flat=True)
-        thr=MavDatum.objects.filter(msgField='ThrIn').values_list('value',flat=True)
-        return pandas.Series(thr, index=thrindex)
+        return fltdata.sensor_plot_pandas(self, msg_field)
     
     @property
     def is_tlog(self):
         return 'tlog' in self.slug
-    
-    def initial_plot(self):
-        #first we try to plot 
-        #right_yax='Mot 1'
-        #left_yax='Mot 2'
-        if self.is_tlog:
-            right_yax='throttle'
-            left_yax='servo3_raw'
-            #return {"labels":['Battery voltage (mv)','Throttle (pwm)'],
-                    #"data":"[[%s],[%s]]"%(self.battVltsDataFlot(),self.thrDataFlot())}
-        elif 'Mot 1' in self.messageFieldsRecorded:
-            #probably because it is a dataflash log, not a tlog
-            right_yax='Mot 1'
-            left_yax='Mot 2'
-        elif 'Mot1' in self.messageFieldsRecorded:
-            #probably because it is a dataflash log, not a tlog
-            right_yax='Mot1'
-            left_yax='Mot2'            
-        elif 'roll_sensor' in self.messageFieldsRecorded:
-            right_yax='roll_sensor'
-            left_yax='pitch_sensor'
-        return {"labels":[right_yax,left_yax],
-                "data":"[[%s],[%s]]"%(self.sensor_plot_data(right_yax),self.sensor_plot_data(left_yax))}
     
     def lats(self):
         # The 'order_by' should be unnecessary, since it's already in the model's Meta, but seems only to work this way. *might be fixed now TODO
@@ -116,7 +73,7 @@ class Flight(models.Model):
         if self.is_tlog:
             lats=lats/1e7
         return lats
-        
+    
     def lons(self):
         lons=MavDatum.objects.filter(message__flight=self, msgField__in=['lon','Lng','Long'], message__msgType__in=['GLOBAL_POSITION_INT','GPS']).order_by('message__timestamp')
         lons=scipy.array(lons.values_list('value', flat=True))
@@ -124,19 +81,16 @@ class Flight(models.Model):
             lons=lons/1e7        
         return lons
 
-    def latLonsFlot(self):
-        return ','.join([r'[%.1f,%.1f]' % latLon for latLon in zip(self.lats(), self.lons())])
-
     @property
-    def latLonsJSON(self):
-        return scipy.array([self.lons(), self.lats()]).transpose().tolist()
+    def lat_lons_JSON(self):
+        return fltdata.lat_lons_JSON(self)
     
     @property
-    def gpsTimes(self):
-        return MavMessage.objects.filter(flight=self,msgType__in=['GLOBAL_POSITION_INT','df_GPS']).order_by('timestamp').values_list('timestamp',flat=True)
+    def gps_times(self):
+        return fltdata.gps_times()
     
     @property
-    def startTime(self):
+    def start_time(self):
         #if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
         try:
             return self.mavmessage_set.exclude(msgType='BAD_DATA').order_by('timestamp')[0].timestamp
@@ -144,7 +98,7 @@ class Flight(models.Model):
             pass
     
     @property
-    def endTime(self):
+    def end_time(self):
         #if self.mavmessage_set.exclude(msgType='BAD_DATA').exists():
         try:
             return self.mavmessage_set.exclude(msgType='BAD_DATA').latest('timestamp').timestamp
@@ -152,37 +106,26 @@ class Flight(models.Model):
             pass
     
     @property
-    def gpsTimestamps(self):
-        longTstamps=[dt2jsts(timestamp) for timestamp in self.gpsTimes]
-        #unfortunately the timestamps end up with L for 'long' in the JS unless we remove them here.
-        #Actually, could probably do the multiplication by 1000 to convert to JS timestamp on the client side.
-        #return str(longTstamps).replace('L','')
-        return [dt2jsts(timestamp) for timestamp in self.gpsTimes]
-        
-    @property
-    def messageTypesRecorded(self):
-        return MavDatum.objects.filter(message__flight=self).values_list('message__msgType',flat=True).order_by('message__msgType').distinct()
-    
-    @property
-    def messageFieldsRecorded(self):
-        return MavDatum.objects.filter(message__flight=self).values('msgField').order_by('msgField').distinct().values_list('msgField',flat=True)
-    
+    def gps_timestamps(self):
+        return fltdata.gps_timestamps(self)
+           
     @property
     def length(self):
-        return (self.endTime - self.startTime)
+        return (self.end_time - self.start_time)
     
     def lengthStr(self):
         return str(self.length)[:7]
+
+    def message_fields_recorded(self):
+        return fltdata.message_fields_recorded(self)
+        
+    def message_types_recorded(self):
+        return fltdata.message_types_recorded(self)
     
-    def countMessagesByType(self):
-        msgTypeCounts=[None]*len(self.messageTypesRecorded)
-        x=0
-        for msgType in self.messageTypesRecorded:
-            msgTypeCounts[x]=self.mavmessage_set.filter(msgType=msgType).count()
-            x+=1
-        return zip(self.messageTypesRecorded, msgTypeCounts)
+    def count_messages_by_type(self):
+        return fltdata.count_messages_by_type(self)
     
-    def detectTakeoffs(self, thr_threshold=300):
+    def detect_takeoffs(self, thr_threshold=300):
         #Only for dflog now
         takeoffs=cross(self.sensor_plot_pandas('ThrIn'), cross=thr_threshold, direction='rising')
         for takeoffTime in takeoffs:
@@ -194,7 +137,7 @@ class Flight(models.Model):
                               )
             newFE.save()        
 
-    def detectLandings(self, thr_threshold=300):
+    def detect_landings(self, thr_threshold=300):
         #Only for dflog now
         landings=cross(self.sensor_plot_pandas('ThrIn'), cross=thr_threshold, direction='falling')
         for landingTime in landings:
@@ -205,16 +148,9 @@ class Flight(models.Model):
                               comment='Throttle crossing %s detected' % thr_threshold
                               )
             newFE.save()
-    
-    def throttleData(self):
-        pass
-        #return (timestamps, voltages)
 
     def __unicode__(self):
         return self.slug
-
-    #for msgField in messageFieldsRecorded:
-        #self.__dict__['%sJSON' % msgField]=lambda: MavDatum.objects.filter(message__flight=self, msgField=msgField).values_list('message__timestamp','value')
     
     #overwritten save method to import the logfile if this is a new instance
     def save(self, gpstime=True, *args, **kwargs):
@@ -245,8 +181,8 @@ class Flight(models.Model):
             self.read_tlog()
             pass
         #Do automatic processing
-        self.detectTakeoffs()
-        self.detectLandings()
+        self.detect_takeoffs()
+        self.detect_landings()
 
     def read_tlog(self):
         mlog = mavutil.mavlink_connection(self.logfile.path)
@@ -290,16 +226,16 @@ class FlightVideo(models.Model):
     videoFile=models.FileField(blank=True, null=True, upload_to='video')
     
     @property
-    def startTime(self):
+    def start_time(self):
         if self.delayVsLogstart:
-            return self.flight.startTime+datetime.timedelta(seconds=self.delayVsLogstart)
+            return self.flight.start_time+datetime.timedelta(seconds=self.delayVsLogstart)
         else:
             return None
     #For youtube videos, we don't store the endtime. Instead, get it from javascript at runtime.
     
     @property
     def startTimeJS(self):
-        return dt2jsts(self.startTime)
+        return dt2jsts(self.start_time)
     
     def get_absolute_url(self):
         return reverse('flights', args=[self.flight.slug])
@@ -323,9 +259,6 @@ class MavDatum(models.Model):
     message=models.ForeignKey('MavMessage',null=True,db_column='timestamp')
     msgField=models.CharField(max_length=40)
     value=models.FloatField()
-
-    def epoch_timestamp(self):
-        return calendar.gmtime(self.message.timestamp.timetuple())*1000
 
     def __unicode__(self):
         return "%s on %s" % (self.msgField, self.message.timestamp)

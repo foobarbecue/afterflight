@@ -32,11 +32,10 @@ var addDataToPlot, addTimelineEvent
 $(document).ready(function(){
 
 // Pull all initial data from the DB
-latLonsJSON={{object.latLonsJSON}}
-//initialPlotData=[[{{object.battVltsDataFlot}}],[{{object.thrDataFlot}}]];
+latLonsJSON={{object.lat_lons_JSON}}
 initialPlotData={{initial_plot.data|safe}}
 initialPlotLabels={{initial_plot.labels|safe}}
-gpsTimestamps={{object.gpsTimestamps|safe}}
+gpsTimestamps={{object.gps_timestamps|safe}}
 tlData = {{timeline_data|safe}}
 
 // Setup the sensor data plot
@@ -323,8 +322,8 @@ function onYouTubePlayerReady(playerId) {
 function addVideoToTimeline() {
     //TODO make this handle multiple videos
     {% if flight.flightVideo_set.0 %}
-        startime={{flight.flightVideo_set.0.startTime}}
-        endtime={{flight.flightVideo_set.0.startTime}}+ytplayer.getDuration()
+        startime={{flight.flightvideo_set.0.startTime}}
+        endtime={{flight.flightvideo_set.0.startTime}}+ytplayer.getDuration()
     {% endif %}
 }
 </script>
@@ -357,7 +356,7 @@ function addVideoToTimeline() {
 <div id="detailsContainer-2">
         Total log messages: {{object.mavmessage_set.count}}
         <table>
-        {% for messageType in object.countMessagesByType %}
+        {% for messageType in object.count_messages_by_type %}
         <tr><td>{{messageType.0}}:</td><td> {{messageType.1}}</td></tr>
         {% endfor %}
         </table>
@@ -394,13 +393,13 @@ function addVideoToTimeline() {
         <form id="sensorPlotDataForm">
             <p>Left y axis:
             <select name="left_axis">
-                {% for msg_field in object.messageFieldsRecorded %}
+                {% for msg_field in object.message_fields_recorded %}
                     <option value="{{msg_field}}">{{msg_field}}</option>
                 {% endfor %}
             </select></p>
             <p>Right y axis:
             <select name="right_axis">
-                {% for msg_field in object.messageFieldsRecorded %}
+                {% for msg_field in object.message_fields_recorded %}
                     <option value="{{msg_field}}">{{msg_field}}</option>
                 {% endfor %}
             </select></p>

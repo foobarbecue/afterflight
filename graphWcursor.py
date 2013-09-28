@@ -2,8 +2,8 @@ from pylab import *
 import pandas, cv, os
 
 logFilePath="/home/aaron/Mission Planner 1.1.96/logs/2012-07-09 10-02 6.log"
-startTime=datetime.datetime(2012,07,9)
-def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime):
+start_time=datetime.datetime(2012,07,9)
+def loadDataFromLog(logFilePath=logFilePath,dataType='all',start_time=start_time):
     logData={'timestamp':[],'motors_out':np.empty(dtype='int32', shape=(0,4))}
     logFile=open(logFilePath,'r')
     timestampIsCurrent=False
@@ -11,7 +11,7 @@ def loadDataFromLog(logFilePath=logFilePath,dataType='all',startTime=startTime):
         if dataType=='all':
             if logLine.startswith('GPS'):
                 logLine=logLine.split(',')
-                logData['timestamp'].append(datetime.timedelta(milliseconds=int(logLine[1]))+startTime)
+                logData['timestamp'].append(datetime.timedelta(milliseconds=int(logLine[1]))+start_time)
                 timestampIsCurrent=True
             elif logLine.startswith('MOT'):
                 if timestampIsCurrent:
