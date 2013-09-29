@@ -30,7 +30,7 @@ urlpatterns = patterns('',
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     #url(r'^flight/(?P<slug>.+)/$',object_detail,{'queryset':Flight.objects.all()}, name='flights'),
-    url(r'^flight/(?P<slug>.+)/$',flightDetail, name='flights'),
+    url(r'^flight/(?P<slug>.+)/$',flight_detail, name='flights'),
     url(r'^pilot/(?P<pilot>.+)/$',flightIndex, name='flightsForPilot'),
     url(r'^data$',plotDataJSON, name='flights'),
     url(r'^/?$',flightIndex, name='timeline'),

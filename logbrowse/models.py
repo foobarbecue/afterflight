@@ -231,17 +231,13 @@ class FlightVideo(models.Model):
     url=models.URLField(blank=True, null=True)
     videoFile=models.FileField(blank=True, null=True, upload_to='video')
     
-    @property
     def start_time(self):
-        if self.delayVsLogstart:
-            return self.flight.start_time+datetime.timedelta(seconds=self.delayVsLogstart)
-        else:
-            return None
-    #For youtube videos, we don't store the endtime. Instead, get it from javascript at runtime.
+        return self.flight.start_time()+datetime.timedelta(seconds=self.delayVsLogstart)
+        #For youtube videos, we don't store the endtime. Instead, get it from javascript at runtime.
     
     @property
-    def startTimeJS(self):
-        return dt2jsts(self.start_time)
+    def start_time_js(self):
+        return dt2jsts(self.start_time())
     
     def get_absolute_url(self):
         return reverse('flights', args=[self.flight.slug])

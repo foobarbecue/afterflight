@@ -28,6 +28,7 @@ var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
 var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
 var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
 var addDataToPlot, addTimelineEvent
+var vidStartTime = {{object.flightvideo_set.all.0.start_time_js}}
 
 $(document).ready(function(){
 
@@ -87,7 +88,6 @@ $('select[name="right_axis"] option[value="'+ initialPlotLabels[1] +'"]').prop('
 
 // Draw videos
     {% for video in object.flightvideo_set.all %}
-
         var params = { allowScriptAccess: "always" };    
         var atts = { id: "vidPlayer{{video.id}}", class:"vidPlayer" };
         swfobject.embedSWF("{{video.url}}?enablejsapi=1&playerapiid=apiForVid{{video}}&version=3",
@@ -182,6 +182,7 @@ function drawTimeline() {
     //Register an event to seek all widgets when the customtime bar is dragged
     links.events.addListener(timeline, 'timechange', onTimelineBarDragged)
     links.events.addListener(timeline, 'select', onTimelineItemSelected)
+    links.events.addListener(timeline, 'change', onTimelineItemMoved)
 };
 
 addTimelineEvent= function() {
@@ -240,7 +241,7 @@ function seekPlotTo(seekTime) {
 
 function seekVideoTo(seekTime) {
     {% for video in object.flightvideo_set.all %}
-        vidStartTime={{video.startTimeJS}}
+        vidStartTime={{video.start_time_js}}
         //Youtube API takes seconds, JS timestamps are in ms, so divide by 1000
         vidSeekTime=(seekTime-vidStartTime)/1000
         vidPlayer{{video.id}}.seekTo(vidSeekTime)
@@ -262,7 +263,6 @@ function onTimelineItemSelected(){
 	if (evtData.group == "Flight events"){
 		contextText = 'Event #' + evtData.pk + ' (' + evtData.content + ')'
 		contextText = '<form>' + contextText
-	
 		contextText += '<input type="hidden" name="pk" value='
 		contextText += evtData.pk
 		contextText += '></input>'
@@ -280,7 +280,24 @@ function onTimelineItemSelected(){
 		$('#timelineEvtInfo').html(contextText)
 		$('#timelineEvtInfo form').submit(editSelectedFlightEvent)
 		}
+	else if (evtData.group == "Video"){
+		contextText = 'Video from ' + evtData.vidUrl + '. Drag to change time offset.'
+		$('#timelineEvtInfo').html(contextText)
 	}
+	}
+
+function onTimelineItemMoved(){
+	vidDelay=evtData.start.getTime()-vidStartTime
+	contextText = '<form>' + 'Video from ' + evtData.vidUrl
+	contextText += '<input type="hidden" name="pk" value='
+	contextText += evtData.pk
+	contextText += '></input>'
+	contextText += '<input type="hidden" name="vidDelay" value=' + vidDelay + '></input>'
+	contextText += '<input type="hidden" name="action" value="changeVidDelay"></input>'
+	contextText += '<input type="submit" value="Set video start to: ' + evtData.start + '"></submit></form>'
+	$('#timelineEvtInfo').html(contextText)
+	$('#timelineEvtInfo form').submit(editSelectedFlightEvent)
+}
 
 editSelectedFlightEvent = function(){
 	evtData=timeline.data[timeline.selection.index]
@@ -303,13 +320,18 @@ editSelectedFlightEvent = function(){
 			else if (resp == 'deleted'){
 				$(domItem).remove()
 			}
+			//TODO send this properly in JSON object
+			else {
+				$('#timelineEvtInfo').html('Delay time changed')
+				vidStartTime = parseFloat(resp)
+			}
         })
     return false
 }
 
 {% for video in object.flightvideo_set.all %}
 seekWidgetsToVidPos{{video.id}}=function() {    
-    vidStartTime={{video.startTimeJS}}
+    vidStartTime={{video.start_time_js}}
     seekTime=vidPlayer{{video.id}}.getCurrentTime()*1000+vidStartTime
     console.log('trying to seek to time ' + parseInt(seekTime))
     seekPlotTo(seekTime)

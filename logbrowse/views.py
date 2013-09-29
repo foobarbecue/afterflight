@@ -116,7 +116,7 @@ def changeVidStartTime(request, vid_id):
     except:
         return HttpResponseBadRequest('Invalid input for delayVsLogstart')
 
-def flightDetail(request, slug):
+def flight_detail(request, slug):
     print 'loading' + slug
     flight=Flight.objects.get(slug=slug)
     timelineEventList=[]
@@ -132,12 +132,14 @@ def flightDetail(request, slug):
         except AttributeError:
             pass
     for video in flight.flightvideo_set.all():
-        start_time=dt2jsts(flight.start_time+datetime.timedelta(seconds=video.delayVsLogstart))
+        start_time=dt2jsts(flight.start_time()+datetime.timedelta(seconds=video.delayVsLogstart))
         timelineDictForVid={"start":start_time,"group":"Video","editable":True}
         if video.onboard:
-            timelineDictForVid['content']='Start of onboard video ' + video.url
+            timelineDictForVid['content']='Start of onboard video ' 
         else:
-            timelineDictForVid['content']='Start of offboard video ' + video.url 
+            timelineDictForVid['content']='Start of offboard video ' + video.url
+        timelineDictForVid['vidUrl']=video.url
+        timelineDictForVid['pk']=video.pk  
         timelineEventList.append(timelineDictForVid)
 
     for evt in flight.flightevent_set.all():
@@ -165,21 +167,29 @@ def edit_flightevent(request):
     #TODO check it's actually POST etc
     pk=request.POST.get('pk')
     action=request.POST.get('action')
-    print "entered confirm fe"
-    flightevent=FlightEvent.objects.get(pk=pk)
-    if request.user == flightevent.flight.pilot:
-        if action == 'confirm':
-            flightevent.confirm()
-            return HttpResponse('confirmed')
-        elif action == 'unconfirm':
-            flightevent.unconfirm() 
-            return HttpResponse('unconfirmed')
-        elif action == 'delete':
-            flightevent.delete() 
-            return HttpResponse('deleted')
+    if action == 'changeVidDelay':
+        flightvid=FlightVideo.objects.get(pk=pk)
+        if request.user == flightvid.flight.pilot:
+            flightvid.delayVsLogstart=float(request.POST.get('vidDelay'))/1000
+            flightvid.save()
+            return HttpResponse(str(flightvid.start_time_js))
+        else:
+            return HttpResponseForbidden('This user does not own this FlightEvent')        
 
     else:
-        return HttpResponseForbidden('This user does not own this FlightEvent')
+        flightevent=FlightEvent.objects.get(pk=pk)
+        if request.user == flightevent.flight.pilot:
+            if action == 'confirm':
+                flightevent.confirm()
+                return HttpResponse('confirmed')
+            elif action == 'unconfirm':
+                flightevent.unconfirm() 
+                return HttpResponse('unconfirmed')
+            elif action == 'delete':
+                flightevent.delete() 
+                return HttpResponse('deleted')
+        else:
+            return HttpResponseForbidden('This user does not own this FlightEvent')
 
 def plotDataJSON(request):
     right_axis_msgfield=request.GET.get('right_axis')
