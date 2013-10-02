@@ -193,7 +193,7 @@ addTimelineEvent= function() {
         'start': start,
         'content': content,
         'group': 'annotations',
-        'editable': 'true'
+        'editable': true
     });
     return false;
 };
@@ -372,7 +372,8 @@ function annotateTimeline(evt) {
     timeline.addItem({
         'start': timeline.customTime,
         'content': $('#annotationText').val(),
-        'group': 'Annotations'
+        'group': 'Annotations',
+        'editable':true
     });
 
     var count = data.getNumberOfRows();
