@@ -49,7 +49,6 @@ def upload_progress(request):
         logfilename = request.META['logfilename']
     if logfilename:
         cache_key = logfilename.replace(' ','_')
-        print 'looking up %s' % cache_key
         data = cache.get(cache_key)
         return HttpResponse(json.dumps(data))
 
@@ -141,6 +140,17 @@ def flight_detail(request, slug):
         timelineDictForVid['vidUrl']=video.url
         timelineDictForVid['pk']=video.pk  
         timelineEventList.append(timelineDictForVid)
+
+    #add start and end of log
+    if flight.is_tlog:
+        log_type='Mavlink telemetry log'
+    else:
+        log_type='APM dataflash log'
+    timelineEventList.append({'start':dt2jsts(flight.start_time()),
+                              'end':dt2jsts(flight.end_time()),
+                              'group':'Logs',
+                              'content':'%s %s' % (log_type, flight.logfile.name)})
+    
 
     for evt in flight.flightevent_set.all():
         print evt
@@ -244,9 +254,9 @@ def flightIndex(request, pilot=None):
         # Get the last GPS coordinate for each flight to add to the flight index map.
         # We use the last one because it's more likely to be a better fix that the first.
         try:
-            latestGPSmsg=flight.mavmessage_set.filter(msgType__in=["GLOBAL_POSITION_INT","GPS_RAW_INT","df_GPS"]).latest()
-            lat=latestGPSmsg.mavdatum_set.get(msgField__in=['lat','Lat']).value/1e7
-            lon=latestGPSmsg.mavdatum_set.get(msgField__in=['lon','Long']).value/1e7
+            latestGPSmsg=flight.mavmessage_set.filter(msgType__in=["GLOBAL_POSITION_INT","GPS_RAW_INT","GPS","df_GPS"]).latest()
+            lat=latestGPSmsg.mavdatum_set.get(msgField__in=['lat','Lat']).value
+            lon=latestGPSmsg.mavdatum_set.get(msgField__in=['lon','Long','Lng']).value
             if lon != 0 and lat != 0: #TODO should actually check the GPS_STATUS messages to throw away points where there is no fix
                 flightStartLocsJSON['features'].append(
                     {

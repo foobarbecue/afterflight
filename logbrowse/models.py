@@ -97,6 +97,9 @@ class Flight(models.Model):
     def start_time(self):
         return fltdata.start_time(self)
     
+    def start_time_js(self):
+        return dt2jsts(self.start_time())
+    
     def end_time(self):
         return fltdata.end_time(self)
     
@@ -303,7 +306,7 @@ class FlightEvent(models.Model):
     comment=models.TextField()
     automatically_detected=models.BooleanField(default=False)
     timestamp=models.DateTimeField()
-    #detection_method=models.CharField(blank=True, null=True, max_length=200)
+    detection_method=models.CharField(blank=True, null=True, max_length=200)
     
     def confirm(self):
         """Human-verify this event after automatic detection"""

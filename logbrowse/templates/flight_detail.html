@@ -241,7 +241,7 @@ function seekPlotTo(seekTime) {
 
 function seekVideoTo(seekTime) {
     {% for video in object.flightvideo_set.all %}
-        vidStartTime={{video.start_time_js}}
+        //vidStartTime={{video.start_time_js}}
         //Youtube API takes seconds, JS timestamps are in ms, so divide by 1000
         vidSeekTime=(seekTime-vidStartTime)/1000
         vidPlayer{{video.id}}.seekTo(vidSeekTime)
@@ -287,7 +287,7 @@ function onTimelineItemSelected(){
 	}
 
 function onTimelineItemMoved(){
-	vidDelay=evtData.start.getTime()-vidStartTime
+	vidDelay=evtData.start.getTime()-{{object.start_time_js}}
 	contextText = '<form>' + 'Video from ' + evtData.vidUrl
 	contextText += '<input type="hidden" name="pk" value='
 	contextText += evtData.pk
@@ -331,7 +331,7 @@ editSelectedFlightEvent = function(){
 
 {% for video in object.flightvideo_set.all %}
 seekWidgetsToVidPos{{video.id}}=function() {    
-    vidStartTime={{video.start_time_js}}
+    //vidStartTime={{video.start_time_js}}
     seekTime=vidPlayer{{video.id}}.getCurrentTime()*1000+vidStartTime
     console.log('trying to seek to time ' + parseInt(seekTime))
     seekPlotTo(seekTime)
