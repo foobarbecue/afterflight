@@ -248,6 +248,7 @@ class FlightVideo(models.Model):
 class MavMessage(models.Model):
     msgType=models.CharField(max_length=40, choices=MSG_TYPES)
     timestamp=models.DateTimeField(db_index=True, primary_key=True)
+    orig_linenum=models.DateTimeField(null=True,blank=True)
     flight=models.ForeignKey('Flight')
 
     def __unicode__(self):
