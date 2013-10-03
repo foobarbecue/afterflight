@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from django.core.cache import cache
-from django.core.files.uploadhandler import TemporaryFileUploadHandler
+from django.core.files.uploadhandler import TemporaryFileUploadHandler, StopFutureHandlers
+from django.core.exceptions import ValidationError
 
+max_size = 10000000
 
-# copied from http://djangosnippets.org/snippets/678/
 
 class ProgressBarUploadHandler(TemporaryFileUploadHandler):
     """
@@ -28,7 +29,8 @@ class ProgressBarUploadHandler(TemporaryFileUploadHandler):
             })
 
     def new_file(self, field_name, file_name, content_type, content_length, charset=None):
-        pass
+        if self.content_length > 10000000:
+            raise StopFutureHandlers(_('File too large. Max size restricted to %s bytes') % max_size)
 
     def receive_data_chunk(self, raw_data, start):
         if self.cache_key:
