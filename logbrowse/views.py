@@ -43,14 +43,20 @@ def upload_progress(request):
 
     Return the upload progress and total length values
     """
+    if 'X-Progress-ID' in request.GET:
+        progress_id = request.GET['X-Progress-ID']
+    elif 'X-Progress-ID' in request.META:
+        progress_id = request.META['X-Progress-ID']
     if 'logfilename' in request.GET:
         logfilename = request.GET['logfilename']
     elif 'logfilename' in request.META:
         logfilename = request.META['logfilename']
-    if logfilename:
-        cache_key = logfilename.replace(' ','_')
-        data = cache.get(cache_key)
-        return HttpResponse(json.dumps(data))
+    cache_key = "%s_%s" % (request.META['REMOTE_ADDR'], progress_id)
+    data = cache.get(cache_key)
+    if not data:
+        data = cache.get(logfilename.replace(' ','_'))
+    return HttpResponse(json.dumps(data))
+    
 
 class FlightForm(ModelForm):
     class Meta:

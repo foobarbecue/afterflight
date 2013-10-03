@@ -16,11 +16,12 @@ class ProgressBarUploadHandler(TemporaryFileUploadHandler):
 
     def handle_raw_input(self, input_data, META, content_length, boundary, encoding=None):
         self.content_length = content_length
-        if 'logfilename' in self.request.GET:
-            logfilename = self.request.GET['logfilename']
-
+        if 'X-Progress-ID' in self.request.GET:
+            self.progress_id = self.request.GET['X-Progress-ID']
+        elif 'X-Progress-ID' in self.request.META:
+            self.progress_id = self.request.META['X-Progress-ID']
         if self.progress_id:
-            self.cache_key = logfilename
+            self.cache_key = "%s_%s" % (self.request.META['REMOTE_ADDR'], self.progress_id)
             cache.set(self.cache_key, {
                 'length': self.content_length,
                 'uploaded': 0
