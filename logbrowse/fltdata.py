@@ -88,8 +88,8 @@ def sensor_plot_data(flight, msg_field):
 
 @cached()
 def sensor_plot_pandas(flight, msg_field):
-    thrindex=logbrowse.models.MavDatum.objects.filter(msgField='ThrIn').values_list('message_id',flat=True)
-    thr=logbrowse.models.MavDatum.objects.filter(msgField='ThrIn').values_list('value',flat=True)
+    thrindex=logbrowse.models.MavDatum.objects.filter(message__flight=flight, msgField=msg_field).values_list('message_id',flat=True)
+    thr=logbrowse.models.MavDatum.objects.filter(message__flight=flight, msgField=msg_field).values_list('value',flat=True)
     return pandas.Series(thr, index=thrindex)
 
 def length_str(flight):

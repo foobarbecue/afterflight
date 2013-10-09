@@ -17,6 +17,8 @@ from logbrowse import fltdata
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.core.files.storage import FileSystemStorage
+from django.core.files.uploadhandler import StopUpload
 from django.db import connection as dbconn
 from django.db import transaction
 from af_utils import dt2jsts, utc, cross
@@ -46,8 +48,21 @@ MSG_TYPES=(('SYS_STATUS','SYS_STATUS'),
 ('STATUSTEXT','STATUSTEXT'),
 ('GPS_STATUS','GPS_STATUS'))
 
+class NoDuplicateFileStorage(FileSystemStorage):
+    """
+    This exists to handle the case of trying to upload the same file twice.
+    By default, django adds a _1 counter to the filename, but we want to 
+    cancel the upload.
+    """
+    def _save(self, name, content):
+        if self.exists(name):
+            raise StopUpload('File already exists', connection_reset=True)
+        return super(OverwriteStorage, self)._save(name, content)
+
 class Flight(models.Model):
     pilot=models.ForeignKey(User,blank=True, null=True)
+    #Doing this this way doesn't quite work yet. Causes TypeError. TODO
+    #logfile=models.FileField(blank=True, null=True, upload_to='logs', storage=NoDuplicateFileStorage)
     logfile=models.FileField(blank=True, null=True, upload_to='logs')
     start=models.DateTimeField(blank=True, null=True)
     comments=models.TextField(blank=True, null=True)
@@ -167,13 +182,13 @@ class Flight(models.Model):
             logfile_path=self.logfile.path
         if not self.is_tlog:
             #flyingrhino can't do tlogs yet. We assume it's a dataflash log if it's not a tlog.
-            fr_flight=flyingrhino.flight(logfile_path)
+            fr_flight=flyingrhino.flight(logfile_path, messaging=self.set_processing_state)
             self.set_processing_state('Dataflash log loaded into memory, inserting into database')
             cursor=dbconn.cursor()
             transaction.enter_transaction_management()
             fr_flight.to_afterflight_sql(dbconn=dbconn.connection,close_when_done=False)
             transaction.commit()
-            self.set_processing_state('Dataflash log inserted into database')
+            self.set_processing_state('Dataflash log inserted into database', length=10, uploaded=10)
         else:
             self.read_tlog()
             pass
@@ -213,12 +228,12 @@ class Flight(models.Model):
         MavDatum.objects.bulk_create(mavData)
         self.set_processing_state('Finished inserting telemetry log data into database')
     
-    def set_processing_state(self, processing_state):
+    def set_processing_state(self, processing_state, length=100, uploaded=50):
         print processing_state
         self.progress_cache_key = self.orig_logfile_name.replace(' ','_')
         cache.set(self.progress_cache_key, {
-            'length': 100,
-            'uploaded': 50,
+            'length': length,
+            'uploaded': uploaded,
             'message': processing_state
         })
         return self.progress_cache_key
