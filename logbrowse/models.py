@@ -168,8 +168,12 @@ class Flight(models.Model):
         #need to make this happen only on first save
         "Overridden save reading in log" + (self.logfile.name or '(no name)')
         self.read_log()
+        self.invalidate_caches()
         #from logbrowse import importLog
         #importLog.readInLog(settings.MEDIA_ROOT + self.logfile.name, gpstime=gpstime)
+    
+    def invalidate_caches(self):
+        fltdata.invalidate_caches(self)
     
     def get_absolute_url(self):
         return reverse('flights', args=[self.slug])

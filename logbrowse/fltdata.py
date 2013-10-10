@@ -113,3 +113,19 @@ def end_time(flight):
         return flight.mavmessage_set.exclude(msgType='BAD_DATA').latest('timestamp').timestamp
     except IndexError:
         pass
+
+def invalidate_caches(flight):
+    flight_funcs=[initial_plot,
+                  message_fields_recorded,
+                  message_types_recorded,
+                  count_messages_by_type,
+                  lat_lons_JSON,
+                  gps_timestamps,
+                  sensor_plot_data,
+                  sensor_plot_pandas,
+                  start_time,
+                  end_time]
+    for fn in flight_funcs:
+        fn.invalidate(flight)
+
+    

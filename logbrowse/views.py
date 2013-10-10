@@ -249,8 +249,8 @@ def flightIndex(request, pilot=None):
         #optimize this later-- should be single db transaction
         try:
             timelineEventList.append(
-                {"start":flight.start_time.isoformat(),
-                "end":flight.start_time.isoformat(),
+                {"start":flight.start_time().isoformat(),
+                "end":flight.start_time().isoformat(),
                 "content":"<a href=%s logpk=%s>%s</a>" % (flight.get_absolute_url(), flight.pk, flight.pk),
                 "group":"flight",
                 "test":"test"
