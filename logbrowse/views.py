@@ -264,6 +264,9 @@ def flightIndex(request, pilot=None):
             lat=latestGPSmsg.mavdatum_set.get(msgField__in=['lat','Lat']).value
             lon=latestGPSmsg.mavdatum_set.get(msgField__in=['lon','Long','Lng']).value
             if lon != 0 and lat != 0: #TODO should actually check the GPS_STATUS messages to throw away points where there is no fix
+                if flight.is_tlog:
+                    lat=lat/1e7
+                    lon=lon/1e7
                 flightStartLocsJSON['features'].append(
                     {
                     "type":"Feature",
