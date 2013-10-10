@@ -12,7 +12,7 @@
     #See the License for the specific language governing permissions and
     #limitations under the License.
 
-import datetime, calendar, scipy, flyingrhino, pandas
+import datetime, scipy, flyingrhino
 from logbrowse import fltdata
 from django.db import models
 from django.contrib.auth.models import User
@@ -200,14 +200,28 @@ class Flight(models.Model):
         mlog = mavutil.mavlink_connection(self.logfile.path)
         mavData=[]
         mavMessages=[]
+        ts=None
+        prev_timestamp=None
+        orig_dup=None
         while True:
             m=mlog.recv_msg()
             if not m:
+                #We have hit the end of the logfile
                 break
             if 'PARAM' in m.get_type():
                 continue
             try:
-                timestamp=datetime.datetime.fromtimestamp(m._timestamp, utc)
+                #Ugly hack because the DB can't deal with duplicate timestamps because we
+                #are using timestamp as the primary key on message
+                if m._timestamp==prev_timestamp or m._timestamp==orig_dup:
+                    #The new timestamp is the same as the last message, so add a millisecond.
+                    if not orig_dup:
+                        orig_dup=m._timestamp
+                    ts=prev_timestamp+0.000001
+                else:
+                    ts=m._timestamp
+                timestamp=datetime.datetime.fromtimestamp(ts, utc)
+                prev_timestamp=ts
             except: 
                 print "bad timestamp on %s " % m
                 break
