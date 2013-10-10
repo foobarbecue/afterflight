@@ -220,6 +220,7 @@ class Flight(models.Model):
                     ts=prev_timestamp+0.000001
                 else:
                     ts=m._timestamp
+                    orig_dup=None
                 timestamp=datetime.datetime.fromtimestamp(ts, utc)
                 prev_timestamp=ts
             except: 
@@ -238,9 +239,9 @@ class Flight(models.Model):
                     mavData.append(newDatum)
         self.set_processing_state('Inserting telemetry log messages into database')
         MavMessage.objects.bulk_create(mavMessages)
-        self.processing_state('Inserting telemetry log data into database')
+        self.set_processing_state('Inserting telemetry log data into database')
         MavDatum.objects.bulk_create(mavData)
-        self.set_processing_state('Finished inserting telemetry log data into database')
+        self.set_processing_state('Waiting for db transaction to finish and refreshing page')
     
     def set_processing_state(self, processing_state, length=100, uploaded=50):
         print processing_state
