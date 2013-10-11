@@ -260,9 +260,8 @@ def flightIndex(request, pilot=None):
         # Get the last GPS coordinate for each flight to add to the flight index map.
         # We use the last one because it's more likely to be a better fix that the first.
         try:
-            latestGPSmsg=flight.mavmessage_set.filter(msgType__in=["GLOBAL_POSITION_INT","GPS_RAW_INT","GPS","df_GPS"]).latest()
-            lat=latestGPSmsg.mavdatum_set.get(msgField__in=['lat','Lat']).value
-            lon=latestGPSmsg.mavdatum_set.get(msgField__in=['lon','Long','Lng']).value
+            lat=MavDatum.objects.filter(msgField__in=['lat','Lat'], message__flight=flight).latest().value
+            lon=MavDatum.objects.filter(msgField__in=['lon','Long','Lng'], message__flight=flight).latest().value
             if lon != 0 and lat != 0: #TODO should actually check the GPS_STATUS messages to throw away points where there is no fix
                 if flight.is_tlog:
                     lat=lat/1e7

@@ -304,8 +304,7 @@ class MavDatum(models.Model):
         return "%s on %s" % (self.msgField, self.message.timestamp)
         
     class Meta:
-        get_latest_by=['message__timestamp']
-        ordering = ['message']
+        get_latest_by='message'
     
 class Battery(models.Model):
     cells=models.IntegerField(blank=True, null=True)
