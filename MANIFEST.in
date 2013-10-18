@@ -1,1 +1,1 @@
-recursive-include afterflight
+recursive-include afterflight *.*
