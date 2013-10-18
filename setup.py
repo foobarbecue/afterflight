@@ -37,6 +37,7 @@ setup(
         'scipy>=0.12.0',
         'six>=1.4.1',
         'wsgiref>=0.1.2',
-        'django-cacheops>=1.0.3'
+        'django-cacheops>=1.0.3',
+        'flyingrhino>=0.1.2'
     ]    
 )
