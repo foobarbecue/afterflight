@@ -1,0 +1,1 @@
+django-progressbarupload/progressbarupload/static/js/progress_bar.js
