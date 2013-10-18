@@ -12,7 +12,7 @@
    #See the License for the specific language governing permissions and
    #limitations under the License.
 
-import calendar, datetime, re, numpy
+import calendar, datetime, re, scipy
 
 def dt2jsts(mdatetime):
     """
@@ -55,7 +55,7 @@ def cross(series, cross=0, direction='cross'):
     """
     # Find if values are above or bellow yvalue crossing:
     above=series.values > cross
-    below=numpy.logical_not(above)
+    below=scipy.logical_not(above)
     left_shifted_above = above[1:]
     left_shifted_below = below[1:]
     x_crossings = []

@@ -31,7 +31,6 @@ setup(
         'Django>=1.5',
         'argparse>=1.2.1',
         'ipython>=1.1.0',
-        'numpy>=1.7.1',
         'pandas>=0.12.0',
         'python-dateutil>=2.1',
         'pytz>=2013d',
