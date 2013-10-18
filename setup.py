@@ -15,6 +15,8 @@
 from distutils.core import setup
 from setuptools import find_packages
 
+REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
+
 setup(
     name='afterflight',
     version='0.2',
@@ -27,17 +29,5 @@ setup(
                 ' Institute to GeoDjango',
     long_description=open('README.rst').read(),
     zip_safe=False,
-    install_requires=[
-        'Django>=1.5',
-        'argparse>=1.2.1',
-        'ipython>=1.1.0',
-        'pandas>=0.12.0',
-        'python-dateutil>=2.1',
-        'pytz>=2013d',
-        'scipy>=0.12.0',
-        'six>=1.4.1',
-        'wsgiref>=0.1.2',
-        'django-cacheops>=1.0.3',
-        'flyingrhino>=0.1.2'
-    ]    
+    install_requires=REQUIREMENTS    
 )

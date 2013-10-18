@@ -15,12 +15,12 @@ Installing the development version
 
 #. Clone the afterflight repository to with ``git clone https://github.com/foobarbecue/afterflight.git``
 
-#. In the directory that is created (called afterflight unless you specified otherwise), run ``python setup.py install``. This will install most of the dependencies.
+#. In the directory that is created (called afterflight unless you specified otherwise), run ``pip -r requirements.txt``. This will install the remaining dependancies.
 
 #. Create ``settings_local.py`` based on the example ``settings_local_example.py``. Usually you can just run ``cp settings_local_example.py settings_local.py``, but if you want to use a database other than sqlite (such as postgres) this is where your database access information will go.
 
-#. Create your database tables by running ``python manage.py syncdb``
+#. Create your database tables by running ``python afterflight/manage.py syncdb``. This will also add a default site for the django sites framework, which is required for the authentication system.
 
-#. Run a local development server: ``python manage.py runserver``. By default this will run at http://localhost:8000 , so you can point your browser there to get started.
+#. Run a local development server: ``python afterflight/manage.py runserver``. By default this will run at http://localhost:8000 , so you can point your browser there to get started.
 
 #. If you want to run this on a public server, follow https://docs.djangoproject.com/en/1.5/howto/deployment/ .
