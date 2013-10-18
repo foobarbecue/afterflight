@@ -25,7 +25,7 @@ setup(
     license='Apache 2.0, see LICENCE.txt',
     description='Add maps and photos from the French National Geographic' + \
                 ' Institute to GeoDjango',
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     zip_safe=False,
     install_requires=[
         'Django>=1.5',
