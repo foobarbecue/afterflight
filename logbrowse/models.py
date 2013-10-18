@@ -348,6 +348,6 @@ class FlightEvent(models.Model):
         self.save()
     
     def unconfirm(self):
-        """Human-verify this event after automatic detection"""
+        """Human-invalidate this event after automatic detection"""
         self.automatically_detected=True
         self.save()
