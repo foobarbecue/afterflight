@@ -19,14 +19,13 @@ REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
 
 setup(
     name='afterflight',
-    version='0.2',
+    version='0.2.1',
     author=u'Aaron Curtis',
     author_email='aaron@aarongcurtis.com',
     packages=find_packages(),
     url='http://github.com/foobarbecue/afterflight',
     license='Apache 2.0, see LICENCE.txt',
-    description='Add maps and photos from the French National Geographic' + \
-                ' Institute to GeoDjango',
+    description='An application for analysis of UAV log and video.',
     long_description=open('README.rst').read(),
     zip_safe=False,
     install_requires=REQUIREMENTS    
