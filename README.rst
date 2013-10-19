@@ -1,4 +1,4 @@
-afterflightafterflight
+afterflight
 ===========
 
  An application for analysis of UAV log and video.
