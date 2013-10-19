@@ -12,7 +12,7 @@ Installing the development version
 
 #. Clone the afterflight repository to with ``git clone https://github.com/foobarbecue/afterflight.git``
 
-#. In the directory that is created (called afterflight unless you specified otherwise), run ``pip -r requirements.txt``. This will install the remaining dependancies.
+#. In the directory that is created (called afterflight unless you specified otherwise), run ``pip -r ./afterflight/requirements.txt``. This will install the remaining dependancies.
 
 #. Create ``settings_local.py`` based on the example ``settings_local_example.py``. Usually you can just run ``cp settings_local_example.py settings_local.py``, but if you want to use a database other than sqlite (such as postgres) this is where your database access information will go.
 

@@ -1,4 +1,6 @@
-
+# For deployment, change this to the hostname or IP address
+# of your server
+ALLOWED_HOSTS=['127.0.0.1']
 
 DATABASES = {
     'default': {
@@ -11,8 +13,8 @@ DATABASES = {
 # development tool
 INTERNAL_IPS = ('127.0.0.1',)
 
-#Add optional dependencies
+# Add optional dependencies
 DEBUG_APPS = ('debug_toolbar',)
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
