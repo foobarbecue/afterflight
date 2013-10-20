@@ -46,7 +46,10 @@ def initial_plot(flight):
         elif 'roll_sensor' in msg_fields:
             right_yax='roll_sensor'
             left_yax='pitch_sensor'
-    return {"labels":[right_yax,left_yax],
+        else:
+            right_yax=msg_fields[0]
+            left_yax=msg_fields[1]
+    return {"labels":"['%s','%s']" % (right_yax, left_yax),
             "data":"[[%s],[%s]]"%(flight.sensor_plot_data(right_yax),flight.sensor_plot_data(left_yax))}
 
 @cached()    
