@@ -3,7 +3,7 @@ afterflight
 
  An application for analysis of UAV log and video.
 
- Introductory video with quickstart is at http://youtu.be/wdeeGyvHJ9c .
+ Introductory video with quickstart is at http://youtu.be/8XBCBC2oJ70 .
 
 Installing the development version
 **********************************
