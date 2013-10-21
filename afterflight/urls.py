@@ -41,6 +41,7 @@ urlpatterns = patterns('',
     url(r'^upload', FlightCreate.as_view(), name='flight_create'),
     url(r'^add_video', VideoCreate.as_view(), name='video_create'),
     url(r'^edit_fe', edit_flightevent, name='edit_flightevent'),
+    (r'^comments/', include('fluent_comments.urls')),
     (r'^accounts/', include('allauth.urls')),
 )
 

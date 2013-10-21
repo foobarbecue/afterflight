@@ -10,3 +10,4 @@ django-cacheops>=1.0.3
 flyingrhino>=0.1.2
 django-debug-toolbar
 django-allauth
+django-disqus

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load comments %}
 {% block head %}
 
 <link type="text/css" href="/media/js/openlayers/theme/default/scalebar-thin.css" rel="stylesheet">
@@ -6,6 +7,7 @@
 <link rel="stylesheet" type="text/css" href="/media/js/jqplot/jquery.jqplot.css" />
 <link rel="stylesheet" type="text/css" href="/media/css/jquery-ui.css" />
 <link rel="stylesheet" type="text/css" href="/media/css/flightDetail.css">
+<link rel="stylesheet" type="text/css" href="/media/fluent_comments/css/ajaxcomments.css" />
 <script src="/media/js/jquery.min.js"></script>
 <script src="/media/js/jqplot/jquery.jqplot.min.js"></script>
 <script src="/media/js/jqplot/plugins/jqplot.dateAxisRenderer.min.js"></script>
@@ -15,6 +17,7 @@
 <script type="text/javascript" src="/media/js/timeline.js"></script>
 <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
 <script src="/media/js/openlayers/lib/Control/ScaleBar.js"></script>
+<script type="text/javascript" src="/media/fluent_comments/js/ajaxcomments.js"></script>
 {%if object.flightvideo_set.all %}
 <script src="/media/js/swfobject.js"></script>
 {% endif %}
@@ -413,10 +416,11 @@ function addVideoToTimeline() {
 
 <ul>
 <li><a href="#detailsContainer-1">Flight notes</a></li>
-<li><a href="#detailsContainer-2">Log summary</a></li>
-<li><a href="#detailsContainer-3">Parameters</a></li>
-<li><a href="#detailsContainer-4">Flight analysis</a></li>
-<li><a href="#detailsContainer-4">Export</a></li>
+<li><a href="#detailsContainer-2">Comments</a></li>
+<li><a href="#detailsContainer-3">Log summary</a></li>
+<li><a href="#detailsContainer-4">Parameters</a></li>
+<li><a href="#detailsContainer-5">Flight analysis</a></li>
+<li><a href="#detailsContainer-6">Export</a></li>
 </ul>
 <div class="tabs-background ui-widget-header"><h2>Flight details</h2></div>
 <div id="detailsContainer-1">
@@ -431,6 +435,26 @@ function addVideoToTimeline() {
     
 </div>
 <div id="detailsContainer-2">
+	{% render_comment_list for object %}
+
+	{% if user.is_authenticated %}
+	    {% get_comment_form for object as form %}
+	    <form action="{% comment_form_target %}" method="POST">
+	    {% csrf_token %}
+	    {{ form.comment }}
+	    {{ form.content_type }}
+	    {{ form.object_pk }}
+	    {{ form.timestamp }}
+	    {{ form.security_hash }}
+	    <input type="hidden" name="next" value="{{ object.get_absolute_url }}" />
+	    <input type="submit" value="Add comment" id="id_submit" />
+	    </form>
+	{% else %}
+	    <p>Please <a href="{% url 'auth_login' %}">log in</a> to leave a comment.</p>
+	{% endif %}
+
+</div>
+<div id="detailsContainer-3">
         Total log messages: {{object.mavmessage_set.count}}
         <table>
         {% for messageType in object.count_messages_by_type %}
@@ -439,11 +463,11 @@ function addVideoToTimeline() {
         </table>
     
 </div>
-<div id="detailsContainer-3">
+<div id="detailsContainer-4">
     Not implemented yet.
     
 </div>
-<div id="detailsContainer-4">
+<div id="detailsContainer-5">
     Not implemented yet.
     
 </div>

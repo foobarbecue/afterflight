@@ -45,11 +45,15 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     'progressbarupload',
+    'fluent_comments',
+    'crispy_forms',
+    'django.contrib.comments',
 #    'south'
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
 )
 
+CRISPY_TEMPLATE_PACK = 'uni_form'
 
 FILE_UPLOAD_HANDLERS = (
     "progressbarupload.uploadhandler.ProgressBarUploadHandler",
