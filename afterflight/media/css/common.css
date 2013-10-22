@@ -5,6 +5,9 @@ html, body {
     margin: 0;
     padding: 0;
 }
+th {
+	text-align: left;
+}
 h1 {
     margin-bottom: 0;
     font-weight: normal;

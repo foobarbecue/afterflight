@@ -10,20 +10,27 @@ var size = new OpenLayers.Size(21, 25);
 var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
 var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
 var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
+//Sort the flight list table
+$(function(){
+		$("#flights-table").tablesorter();
+}
+)
 </script>
 {% endblock head %}
 {% block nav-status%}Listing {{object_list.count}} flights {% endblock %}
 {% block content %}
 <div id="info">
 
-<table id="flights-table">
+<table id="flights-table"  class="tablesorter">
+	<thead>
     <tr class="table-header">
         <th>Name</th>
         <th>Start</th>
         <th>Length</th>
         <th>Comments</th>
         <th>Pilot</th>
-
+	</thead>
+	<tbody>
     {% for flight in object_list %}
         <tr logpk="{{flight.pk}}" onclick="document.location = '/flight/{{flight.slug}}';">
             <td>{{flight.pk}}</td>
@@ -33,6 +40,7 @@ var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
             <td>{{flight.pilot}}</td>
         </tr>
     {% endfor %}
+    </tbody>
 </table>
 
 </div>
