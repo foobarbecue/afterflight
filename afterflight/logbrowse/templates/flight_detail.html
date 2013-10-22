@@ -436,7 +436,11 @@ function addVideoToTimeline() {
 </div>
 <div id="detailsContainer-2">
 	{% render_comment_list for object %}
-	{% render_comment_form for object %}
+	{% if request.user.is_authenticated%}
+		{% render_comment_form for object %}
+	{% else %}
+    	Please <a href="{% url "account_login" %}">Login</a> to post a comment.
+	{% endif %}
 </div>
 <div id="detailsContainer-3">
         Total log messages: {{object.mavmessage_set.count}}
