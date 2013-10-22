@@ -226,7 +226,7 @@ class LogUploadForm(ModelForm):
     class Meta:
         model = Flight
 
-def flightIndex(request, pilot=None):
+def flight_index(request, pilot=None):
     if pilot:
         flights=Flight.objects.filter(pilot__username=pilot)
     else:
@@ -260,8 +260,7 @@ def flightIndex(request, pilot=None):
         # Get the last GPS coordinate for each flight to add to the flight index map.
         # We use the last one because it's more likely to be a better fix that the first.
         try:
-            lat=MavDatum.objects.filter(msgField__in=['lat','Lat'], message__flight=flight).latest().value
-            lon=MavDatum.objects.filter(msgField__in=['lon','Long','Lng'], message__flight=flight).latest().value
+            lat, lon = flight.location()
             if lon != 0 and lat != 0: #TODO should actually check the GPS_STATUS messages to throw away points where there is no fix
                 if flight.is_tlog:
                     lat=lat/1e7

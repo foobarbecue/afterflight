@@ -105,6 +105,9 @@ class Flight(models.Model):
     def lat_lons_JSON(self):
         return fltdata.lat_lons_JSON(self)
     
+    def location(self):
+        return fltdata.location(self)
+    
     def gps_times(self):
         return fltdata.gps_times(self)
     

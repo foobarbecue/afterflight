@@ -117,6 +117,12 @@ def end_time(flight):
     except IndexError:
         pass
 
+@cached()
+def location(flight):
+    lat=logbrowse.models.MavDatum.objects.filter(msgField__in=['lat','Lat'], message__flight=flight).latest().value
+    lon=logbrowse.models.MavDatum.objects.filter(msgField__in=['lon','Long','Lng'], message__flight=flight).latest().value
+    return (lat, lon)
+
 def invalidate_caches(flight):
     flight_funcs=[initial_plot,
                   message_fields_recorded,
