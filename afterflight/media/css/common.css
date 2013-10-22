@@ -21,6 +21,16 @@ h2 {
     background:#AAAAAA;
     border-bottom-right-radius:8px;
 }
+
+h4 {
+	color: grey;
+	margin: 0;
+	padding: 0;
+	font-weight: normal;
+	float: right;
+	margin: 0 1em 0 0;
+}
+
 .acct-links {
     position: absolute;
     top:0;
@@ -48,4 +58,25 @@ h2 {
 	left: auto;
 	right: 10px;
 	bottom: 10px;
+}
+
+.comments-form textarea {
+	height : 50px;
+}
+
+.comment-text{
+	margin: 0.5em;
+	border: thin grey solid;
+}
+
+.comment-text p{
+	margin: 0;
+}
+
+label {
+	float: left;
+}
+
+.asteriskField{
+	visibility: hidden;
 }

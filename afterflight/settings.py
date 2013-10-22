@@ -53,7 +53,10 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
 )
 
-CRISPY_TEMPLATE_PACK = 'uni_form'
+DEBUG_TOOLBAR_CONFIG = {'INTERCEPT_REDIRECTS': False,}
+
+FLUENT_COMMENTS_EXCLUDE_FIELDS = ('name', 'email', 'url')
+COMMENTS_APP = 'fluent_comments'
 
 FILE_UPLOAD_HANDLERS = (
     "progressbarupload.uploadhandler.ProgressBarUploadHandler",

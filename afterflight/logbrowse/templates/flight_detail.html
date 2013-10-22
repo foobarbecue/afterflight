@@ -436,23 +436,7 @@ function addVideoToTimeline() {
 </div>
 <div id="detailsContainer-2">
 	{% render_comment_list for object %}
-
-	{% if user.is_authenticated %}
-	    {% get_comment_form for object as form %}
-	    <form action="{% comment_form_target %}" method="POST">
-	    {% csrf_token %}
-	    {{ form.comment }}
-	    {{ form.content_type }}
-	    {{ form.object_pk }}
-	    {{ form.timestamp }}
-	    {{ form.security_hash }}
-	    <input type="hidden" name="next" value="{{ object.get_absolute_url }}" />
-	    <input type="submit" value="Add comment" id="id_submit" />
-	    </form>
-	{% else %}
-	    <p>Please <a href="{% url 'auth_login' %}">log in</a> to leave a comment.</p>
-	{% endif %}
-
+	{% render_comment_form for object %}
 </div>
 <div id="detailsContainer-3">
         Total log messages: {{object.mavmessage_set.count}}
