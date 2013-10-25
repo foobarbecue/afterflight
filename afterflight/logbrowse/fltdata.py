@@ -22,7 +22,7 @@ from cacheops import cached
 #not using 'from logbrowse.models import MavDatum' because of circular dependency
 import logbrowse
 from af_utils import dt2jsts
-import scipy, pandas, pdb
+import scipy, pandas
 
 @cached()
 def initial_plot(flight):
@@ -52,22 +52,22 @@ def initial_plot(flight):
     return {"labels":"['%s','%s']" % (right_yax, left_yax),
             "data":"[[%s],[%s]]"%(flight.sensor_plot_data(right_yax),flight.sensor_plot_data(left_yax))}
 
-@cached()    
+#@cached()    
 def message_fields_recorded(flight):
     return logbrowse.models.MavDatum.objects.filter(message__flight=flight).values('msgField').order_by('msgField').distinct().values_list('msgField',flat=True)
 
-@cached()
+#@cached()
 def message_types_recorded(flight):
     return logbrowse.models.MavDatum.objects.filter(message__flight=flight).values_list('message__msgType',flat=True).order_by('message__msgType').distinct()
 
 @cached()
 def count_messages_by_type(flight):
-    msgTypeCounts=[None]*len(flight.message_types_recorded)
+    msgTypeCounts=[None]*len(flight.message_types_recorded())
     x=0
-    for msgType in flight.message_types_recorded:
+    for msgType in flight.message_types_recorded():
         msgTypeCounts[x]=flight.mavmessage_set.filter(msgType=msgType).count()
         x+=1
-    return zip(flight.message_types_recorded, msgTypeCounts)
+    return zip(flight.message_types_recorded(), msgTypeCounts)
 
 @cached()
 def lat_lons_JSON(flight):
