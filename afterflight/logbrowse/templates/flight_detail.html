@@ -452,8 +452,11 @@ function addVideoToTimeline() {
     
 </div>
 <div id="detailsContainer-4">
-    Not implemented yet.
-    
+        <table>
+        {% for mavParam in object.mavparameter_set.all %}
+        <tr><td>{{mavParam.name}}:</td><td>{{mavParam.value}}</td></tr>
+        {% endfor %}
+        </table>    
 </div>
 <div id="detailsContainer-5">
     Not implemented yet.

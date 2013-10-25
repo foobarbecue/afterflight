@@ -125,8 +125,8 @@ def location(flight):
 
 def invalidate_caches(flight):
     flight_funcs=[initial_plot,
-                  message_fields_recorded,
-                  message_types_recorded,
+#                  message_fields_recorded,
+#                  message_types_recorded,
                   count_messages_by_type,
                   lat_lons_JSON,
                   gps_timestamps,

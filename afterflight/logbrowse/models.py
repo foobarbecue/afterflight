@@ -206,6 +206,7 @@ class Flight(models.Model):
     def read_tlog(self):
         mlog = mavutil.mavlink_connection(self.logfile.path)
         mavData=[]
+        mavParams=[]
         mavMessages=[]
         ts=None
         prev_timestamp=None
@@ -215,24 +216,33 @@ class Flight(models.Model):
             if not m:
                 #We have hit the end of the logfile
                 break
-            if 'PARAM' in m.get_type():
+            if 'PARAM_VALUE' in m.get_type():
+                m=m.to_dict()
+                newFlightParam=MavParameter(flight=self,
+                                               name=m['param_id'],
+                                               value=m['param_value'],
+                                               mav_index=m['param_index'],
+                                               mav_type=m['param_value'])
+                mavParams.append(newFlightParam)
+                #no timestamp on the param, so skip the rest of the loop body
                 continue
-            try:
-                #Ugly hack because the DB can't deal with duplicate timestamps because we
-                #are using timestamp as the primary key on message
-                if m._timestamp==prev_timestamp or m._timestamp==orig_dup:
-                    #The new timestamp is the same as the last message, so add a millisecond.
-                    if not orig_dup:
-                        orig_dup=m._timestamp
-                    ts=prev_timestamp+0.000001
-                else:
-                    ts=m._timestamp
-                    orig_dup=None
-                timestamp=datetime.datetime.fromtimestamp(ts, utc)
-                prev_timestamp=ts
-            except: 
-                print "bad timestamp on %s " % m
-                break
+#            try:
+            #Ugly hack because the DB can't deal with duplicate timestamps because we
+            #are using timestamp as the primary key on message
+            if m._timestamp==prev_timestamp or m._timestamp==orig_dup:
+                #The new timestamp is the same as the last message, so add a millisecond.
+                if not orig_dup:
+                    orig_dup=m._timestamp
+                ts=prev_timestamp+0.000001
+            else:
+                ts=m._timestamp
+                orig_dup=None
+            timestamp=datetime.datetime.fromtimestamp(ts, utc)
+            prev_timestamp=ts
+            #TODO more specific exception
+#             except: 
+#                 print "bad timestamp on %s " % m
+#                 continue
             mavMessages.append(MavMessage(msgType=m.get_type(), timestamp=timestamp, flight=self))
             m=m.to_dict()
             for key, item in m.items():
@@ -244,6 +254,8 @@ class Flight(models.Model):
                         continue
                     newDatum=MavDatum(msgField=key,value=value,message_id=timestamp)
                     mavData.append(newDatum)
+        self.set_processing_state('Inserting telemetry log parameters into database')
+        MavParameter.objects.bulk_create(mavParams)
         self.set_processing_state('Inserting telemetry log messages into database')
         MavMessage.objects.bulk_create(mavMessages)
         self.set_processing_state('Inserting telemetry log data into database')
@@ -263,13 +275,15 @@ class Flight(models.Model):
     def get_processing_state(self):
         return cache.get(self.orig_logfile_name.replace(' ','_'))
 
-class FlightParameter(models.Model):
+class MavParameter(models.Model):
     flight=models.ForeignKey('Flight')
     name=models.CharField(max_length=80)
-    value=value=models.FloatField()
+    value=models.FloatField()
+    mav_index=models.IntegerField(blank=True, null=True)
+    mav_type=models.IntegerField(blank=True, null=True)
     
     def __unicode__(self):
-        return "%s: %s" % (self.msgField, self.value)
+        return "%s: %s" % (self.name, self.value)
 
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
