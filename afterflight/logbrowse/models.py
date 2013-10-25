@@ -263,6 +263,14 @@ class Flight(models.Model):
     def get_processing_state(self):
         return cache.get(self.orig_logfile_name.replace(' ','_'))
 
+class FlightParameter(models.Model):
+    flight=models.ForeignKey('Flight')
+    name=models.CharField(max_length=80)
+    value=value=models.FloatField()
+    
+    def __unicode__(self):
+        return "%s: %s" % (self.msgField, self.value)
+
 class FlightVideo(models.Model):
     flight=models.ForeignKey('Flight')
     #In seconds
