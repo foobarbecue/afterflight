@@ -20,6 +20,7 @@
 <script type="text/javascript" src="/media/js/ajaxcomments.js"></script>
 {%if object.flightvideo_set.all %}
 <script src="/media/js/swfobject.js"></script>
+var vidStartTime = {{object.flightvideo_set.all.0.start_time_js}};
 {% endif %}
 <script>
 
@@ -30,8 +31,9 @@ var size = new OpenLayers.Size(21, 25);
 var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h);
 var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
 var apiKey = "An9cxmMkbbjVOwKKGr8hCIl6N6W30F7VChJdplng1Y12rOJIucGfYMoG5hk6lTct";
-var addDataToPlot, addTimelineEvent
-var vidStartTime = {{object.flightvideo_set.all.0.start_time_js}}
+var addDataToPlot, addTimelineEvent;
+var timer = null;
+var curTime = null;
 
 $(document).ready(function(){
 
@@ -204,7 +206,7 @@ addTimelineEvent= function() {
 drawTimeline();
 
 // Widget control logic (mostly seeking)
-function seekWidgetsTo(seekTime) {
+seekWidgetsTo = function(seekTime) {
     seekVideoTo(seekTime)
     seekPlotTo(seekTime)
     seekTimelineTo(seekTime)
@@ -386,6 +388,22 @@ function annotateTimeline(evt) {
     return false
 }
 
+play = function(){
+    timer = setInterval(function() {
+        seekWidgetsTo(timeline.customTime.getTime() + 100);
+    },100);
+    $(this).hide();
+    $('#stopWithoutVid').show();
+}
+
+$('#playWithoutVid').click(play);
+$('#stopWithoutVid').click(function() {
+    clearInterval(timer);
+    timer = null;
+    $(this).hide();
+    $('#playWithoutVid').show();
+});
+
 $('#sensorPlotDataForm').submit(addDataToPlot)
 $('#timelineController form').submit(annotateTimeline)
 }); // end of jquery document.ready function
@@ -476,6 +494,9 @@ function addVideoToTimeline() {
     		Log in as the creator of the flight, {{object.pilot}} to add one (you are logged in as {{request.user}}). 
     	{% endifequal %} 
     	</p> 
+    	<p>
+    	        <button id="playWithoutVid">Play</button><button id="stopWithoutVid" class="hidden">Stop</button>
+        </p>
 
     {% endfor %}
 </div>

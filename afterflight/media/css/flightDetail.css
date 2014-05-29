@@ -87,3 +87,7 @@
 #timelineEvtInfo{
 	float: right;	
 }
+
+.hidden {
+    display: none;
+}
