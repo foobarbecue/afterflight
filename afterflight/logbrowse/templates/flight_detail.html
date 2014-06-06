@@ -20,10 +20,11 @@
 <script type="text/javascript" src="/media/js/ajaxcomments.js"></script>
 {%if object.flightvideo_set.all %}
 <script src="/media/js/swfobject.js"></script>
-var vidStartTime = {{object.flightvideo_set.all.0.start_time_js}};
 {% endif %}
 <script>
-
+{%if object.flightvideo_set.all %}
+var vidStartTime = {{object.flightvideo_set.all.0.start_time_js}};
+{% endif %}
 // Setup map stuff
 var WGS84 = new OpenLayers.Projection('EPSG:4326');
 var MERCATOR = new OpenLayers.Projection('EPSG:900913');
