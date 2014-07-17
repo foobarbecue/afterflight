@@ -2,6 +2,8 @@ afterflight
 ===========
 
  An application for analysis of UAV log and video.
+ 
+ Development server is live at http://afterflight.foobarbecue.com .
 
  Introductory video with quickstart is at http://youtu.be/8XBCBC2oJ70 .
 
