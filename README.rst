@@ -1,11 +1,11 @@
+NOTE: This project is no longer maintained and since it has not been updated to deal with the many changes in UAV log formats over the last few years, it's no longer very useful. Someday I hope to have the time to revive this. -- foobarbecue, 29 June 2016
+
 afterflight
 ===========
 
  An application for analysis of UAV log and video.
  
  Introductory video with quickstart is at http://youtu.be/8XBCBC2oJ70 .
-
- Development server is live at http://afterflight.foobarbecue.com .
 
 Installing the development version
 **********************************
